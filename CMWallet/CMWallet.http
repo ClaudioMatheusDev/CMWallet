@@ -1,0 +1,6 @@
+@CMWallet_HostAddress = http://localhost:5161
+
+GET {{CMWallet_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
