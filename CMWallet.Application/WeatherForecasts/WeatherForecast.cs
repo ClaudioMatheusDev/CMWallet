@@ -1,4 +1,4 @@
-namespace CMWallet
+namespace CMWallet.Application.WeatherForecasts
 {
     public class WeatherForecast
     {
@@ -11,3 +11,4 @@ namespace CMWallet
         public string? Summary { get; set; }
     }
 }
+

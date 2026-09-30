@@ -1,7 +1,7 @@
 using CMWallet.Application;
 using CMWallet.Infrastructure;
 
-namespace CMWallet
+namespace CMWallet.API
 {
     public class Program
     {
@@ -36,3 +36,4 @@ namespace CMWallet
         }
     }
 }
+
