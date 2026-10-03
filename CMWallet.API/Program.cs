@@ -1,7 +1,9 @@
+using CMWallet.API.Middleware;
 using CMWallet.Application;
+using CMWallet.Application.Interfaces;
+using CMWallet.Application.Services;
 using CMWallet.Infrastructure;
-using CMWallet.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using CMWallet.Infrastructure.Repositories;
 
 namespace CMWallet.API
 {
@@ -11,35 +13,24 @@ namespace CMWallet.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-
             builder.Services.AddControllers();
             builder.Services.AddApplication();
             builder.Services.AddInfrastructure(builder.Configuration);
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
-
-            builder.Services.AddControllers();
+            builder.Services.AddScoped<IContaService, ContaService>();
+            builder.Services.AddScoped<IContaRepository, ContaRepository>();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
             }
 
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseHttpsRedirection();
-
             app.UseAuthorization();
-
-
             app.MapControllers();
 
             app.Run();

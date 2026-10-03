@@ -1,4 +1,5 @@
 ﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Exceptions;
 using CMWallet.Application.Interfaces;
 using CMWallet.Domain.Entities;
 
@@ -15,19 +16,24 @@ namespace CMWallet.Application.Services
 
         public async Task<int> CriarContaAsync(ContaCriarDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Nome))
+            {
+                throw new ValidacaoNegocioException("O nome da conta é obrigatório.");
+            }
+
             var conta = new Conta
             {
                 Nome = dto.Nome,
                 SaldoInicial = dto.SaldoInicial,
                 TipoConta = dto.TipoConta,
-                DataCriacao = DateTime.UtcNow.AddHours(-3)
+                DataCriacao = DateTime.UtcNow.AddHours(-3),
+                DataAtualizacao = DateTime.UtcNow.AddHours(-3)
             };
 
             await _contaRepository.AdicionarContaAsync(conta);
             await _contaRepository.SalvarAlteracoesAsync();
 
             return conta.ContaId;
-
         }
 
         public async Task<ContaReponseDto> BuscarContaPorIdAsync(int contaId)
@@ -36,7 +42,7 @@ namespace CMWallet.Application.Services
 
             if (conta == null)
             {
-                throw new Exception("Conta não encontrada.");
+                throw new ContaNaoEncontradaException(contaId);
             }
 
             return new ContaReponseDto
@@ -50,12 +56,11 @@ namespace CMWallet.Application.Services
             };
         }
 
-        public Task<List<ContaReponseDto>> ListarContasAsync()
+        public async Task<List<ContaReponseDto>> ListarContasAsync()
         {
-           var contas = _contaRepository.ListarTodasContas();
+            var contas = await _contaRepository.ListarTodasContas();
 
-
-            var contasDto = contas.Result.Select(conta => new ContaReponseDto
+            return contas.Select(conta => new ContaReponseDto
             {
                 ContaId = conta.ContaId,
                 Nome = conta.Nome,
@@ -64,15 +69,15 @@ namespace CMWallet.Application.Services
                 DataCriacao = conta.DataCriacao,
                 DataAtualizacao = conta.DataAtualizacao
             }).ToList();
-            return Task.FromResult(contasDto);
         }
+
         public async Task<bool> ApagarContaAsync(int ContaId)
         {
-           var conta =await  _contaRepository.BuscarContasPorIdAsync(ContaId)   ;
+            var conta = await _contaRepository.BuscarContasPorIdAsync(ContaId);
 
             if (conta == null)
             {
-                throw new Exception("Conta não encontrada.");
+                throw new ContaNaoEncontradaException(ContaId);
             }
 
             _contaRepository.DeletarConta(conta);
@@ -83,11 +88,16 @@ namespace CMWallet.Application.Services
 
         public async Task<bool> AtualizarContaAsync(int ContaId, ContaAtualizarDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Nome))
+            {
+                throw new ValidacaoNegocioException("O nome da conta é obrigatório.");
+            }
+
             var conta = await _contaRepository.BuscarContasPorIdAsync(ContaId);
 
             if (conta == null)
             {
-                throw new Exception("Conta não encontrada.");
+                throw new ContaNaoEncontradaException(ContaId);
             }
 
             conta.Nome = dto.Nome;
@@ -100,8 +110,5 @@ namespace CMWallet.Application.Services
 
             return true;
         }
-
     }
-
-
 }
