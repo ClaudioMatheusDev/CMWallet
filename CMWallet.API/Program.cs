@@ -1,5 +1,7 @@
 using CMWallet.Application;
 using CMWallet.Infrastructure;
+using CMWallet.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace CMWallet.API
 {
@@ -16,6 +18,14 @@ namespace CMWallet.API
             builder.Services.AddInfrastructure(builder.Configuration);
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(connectionString));
+
+            builder.Services.AddControllers();
 
             var app = builder.Build();
 
