@@ -7,7 +7,7 @@ namespace CMWallet.Application.Interfaces
         Task<int> CriarContaAsync(ContaCriarDto dto);
         Task<ContaReponseDto> BuscarContaPorIdAsync(int contaId);
         Task<List<ContaReponseDto>> ListarContasAsync();
-        Task<bool> ApagarContaAsync (int ContaId);  
-        Task<bool> AtualizarContaAsync (int ContaId, ContaAtualizarDto dto);
+        Task ApagarContaAsync (int ContaId);  
+        Task AtualizarContaAsync (int ContaId, ContaAtualizarDto dto);
     }
 }
