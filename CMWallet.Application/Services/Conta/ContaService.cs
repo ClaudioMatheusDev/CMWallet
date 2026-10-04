@@ -71,7 +71,7 @@ namespace CMWallet.Application.Services
             }).ToList();
         }
 
-        public async Task<bool> ApagarContaAsync(int ContaId)
+        public async Task ApagarContaAsync(int ContaId)
         {
             var conta = await _contaRepository.BuscarContasPorIdAsync(ContaId);
 
@@ -83,10 +83,9 @@ namespace CMWallet.Application.Services
             _contaRepository.DeletarConta(conta);
             await _contaRepository.SalvarAlteracoesAsync();
 
-            return true;
         }
 
-        public async Task<bool> AtualizarContaAsync(int ContaId, ContaAtualizarDto dto)
+        public async Task AtualizarContaAsync(int ContaId, ContaAtualizarDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.Nome))
             {
@@ -108,7 +107,6 @@ namespace CMWallet.Application.Services
             _contaRepository.AtualizarConta(conta);
             await _contaRepository.SalvarAlteracoesAsync();
 
-            return true;
         }
     }
 }

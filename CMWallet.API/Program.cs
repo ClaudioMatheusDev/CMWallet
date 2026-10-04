@@ -21,6 +21,9 @@ namespace CMWallet.API
             builder.Services.AddScoped<IContaService, ContaService>();
             builder.Services.AddScoped<IContaRepository, ContaRepository>();
 
+            builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+            builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
