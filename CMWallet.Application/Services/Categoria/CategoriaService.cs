@@ -2,7 +2,6 @@
 using CMWallet.Application.Exceptions;
 using CMWallet.Application.Interfaces;
 using CMWallet.Domain.Entities;
-using System.Runtime.InteropServices;
 
 namespace CMWallet.Application.Services
 {
@@ -35,7 +34,7 @@ namespace CMWallet.Application.Services
 
             if (categoria == null)
             {
-                throw new Exception("Categoria não encontrada.");
+                throw new CategoriaNaoEncontradaException(categoriaId);
             }
 
             return new CategoriaResponseDto
@@ -57,29 +56,28 @@ namespace CMWallet.Application.Services
             }).ToList();
         }
 
-        public async Task<bool> ApagarCategoriaAsync(int categoriaId)
+        public async Task ApagarCategoriaAsync(int categoriaId)
         {
             var categoria = await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId);
 
             if (categoria == null)
             {
-                throw new Exception("Categoria não encontrada.");
+                throw new CategoriaNaoEncontradaException(categoriaId);
             }
 
             _categoriaRepository.DeletarCategoria(categoria);
             await _categoriaRepository.SalvarAlteracoesAsync();
 
 
-            return true;
         }
 
-        public async Task<bool> AtualizarCategoriaAsync(int categoriaID, CategoriaAtualizarDto dto)
+        public async Task AtualizarCategoriaAsync(int categoriaId, CategoriaAtualizarDto dto)
         {
-            var categoria = await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaID);
+            var categoria = await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId);
 
             if (categoria == null)
             {
-                throw new Exception("Categoria não encontrada.");
+                throw new CategoriaNaoEncontradaException(categoriaId);
             }
 
             categoria.Nome = dto.Nome;
@@ -88,7 +86,6 @@ namespace CMWallet.Application.Services
             _categoriaRepository.AtualizarCategoria(categoria);
             await _categoriaRepository.SalvarAlteracoesAsync();
 
-            return true;
         }
     }
 }

@@ -7,7 +7,7 @@ namespace CMWallet.Application.Interfaces
         Task<int> CriarCategoriaAsync(CategoriaCriarDto dto);
         Task<CategoriaResponseDto> BuscarCategoriaPorIdAsync(int categoriaId);
         Task<List<CategoriaResponseDto>> BuscarTodasCategoriasAsync();
-        Task<bool> ApagarCategoriaAsync(int categoriaId);
-        Task<bool> AtualizarCategoriaAsync(int categoriaID, CategoriaAtualizarDto dto);
+        Task ApagarCategoriaAsync(int categoriaId);
+        Task AtualizarCategoriaAsync(int categoriaId, CategoriaAtualizarDto dto);
     }
 }

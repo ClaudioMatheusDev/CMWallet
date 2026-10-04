@@ -20,19 +20,15 @@ namespace CMWallet.API.Controllers.Categoria
         public async Task<IActionResult> CriarCategoria([FromBody] CategoriaCriarDto dto)
         {
             var categoriaId = await _service.CriarCategoriaAsync(dto);
-            return Ok(new
-            {
-                CategoriaId = categoriaId
-            });
+            return CreatedAtAction(
+                nameof(BuscarCategoriaPorId),
+                new { categoriaId },
+                new { CategoriaId = categoriaId });
         }
         [HttpGet("{categoriaId:int}")]
         public async Task<IActionResult> BuscarCategoriaPorId(int categoriaId)
         {
             var categoria = await _service.BuscarCategoriaPorIdAsync(categoriaId);
-            if (categoria == null)
-            {
-                return NotFound();
-            }
             return Ok(categoria);
         }
 
@@ -46,7 +42,6 @@ namespace CMWallet.API.Controllers.Categoria
         [HttpDelete("{categoriaId:int}")]
         public async Task<IActionResult> DeletarCategoria(int categoriaId)
         {
-            var categoria = await _service.BuscarCategoriaPorIdAsync(categoriaId);
             await _service.ApagarCategoriaAsync(categoriaId);
             return NoContent();
         }
@@ -54,7 +49,7 @@ namespace CMWallet.API.Controllers.Categoria
         [HttpPut("{categoriaId:int}")]
         public async Task<IActionResult> AtualizarCategoria(int categoriaId, [FromBody] CategoriaAtualizarDto dto)
         {
-            var atualizado = await _service.AtualizarCategoriaAsync(categoriaId, dto);
+            await _service.AtualizarCategoriaAsync(categoriaId, dto);
             return NoContent();
         }
 
