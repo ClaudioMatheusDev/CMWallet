@@ -1,4 +1,4 @@
-﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Dtos;
 using CMWallet.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +6,7 @@ namespace CMWallet.API.Controllers.Transacao
 {
     [ApiController]
     [Route("api/transacao")]
-    public class TransacaoController : ControllerBase   
+    public class TransacaoController : ControllerBase
     {
         private readonly ITransacaoService _transacaoService;
 
@@ -18,19 +18,17 @@ namespace CMWallet.API.Controllers.Transacao
         [HttpPost("criar")]
         public async Task<IActionResult> CriarTransacao([FromBody] TransacaoCriarDto transacaoDto)
         {
-            var TransacaoId = await _transacaoService.CriarTransacaoAsync(transacaoDto);
-            return Ok(new
-            {
-                TransacaoId = TransacaoId
-            });
+            var transacaoId = await _transacaoService.CriarTransacaoAsync(transacaoDto);
+            return CreatedAtAction(nameof(ListarTransacao), new { transacaoId }, new { TransacaoId = transacaoId });
         }
 
         [HttpGet("{transacaoId:int}")]
-        public async  Task<IActionResult> ListarTransacao([FromRoute] int transacaoId)
+        public async Task<IActionResult> ListarTransacao([FromRoute] int transacaoId)
         {
             var transacao = await _transacaoService.BuscarTransacaoPorIdAsync(transacaoId);
             return Ok(transacao);
         }
+
         [HttpGet("listar")]
         public async Task<IActionResult> ListarTransacoes()
         {
@@ -51,6 +49,5 @@ namespace CMWallet.API.Controllers.Transacao
             await _transacaoService.AtualizarTransacaoAsync(transacaoId, transacaoDto);
             return NoContent();
         }
-
     }
 }
