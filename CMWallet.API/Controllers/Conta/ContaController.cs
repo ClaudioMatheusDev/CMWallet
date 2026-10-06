@@ -16,7 +16,7 @@ namespace CMWallet.API.Controllers.Conta
             _contaService = contaService;
         }
 
-        [HttpPost("entrada")]
+        [HttpPost("criar")]
         public async Task<IActionResult> CreateConta([FromBody] ContaCriarDto contaDto)
         {
             var ContaId = await _contaService.CriarContaAsync(contaDto);
