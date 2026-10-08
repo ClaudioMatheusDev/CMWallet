@@ -1,6 +1,44 @@
 @CMWallet_HostAddress = http://localhost:5161
 
-GET {{CMWallet_HostAddress}}/weatherforecast/
-Accept: application/json
+### Health check
+GET {{CMWallet_HostAddress}}/health
+
+### Contas
+POST {{CMWallet_HostAddress}}/api/contas
+Content-Type: application/json
+
+{ "nome": "Conta Corrente", "saldoInicial": 1000, "tipoConta": 1 }
 
 ###
+GET {{CMWallet_HostAddress}}/api/contas
+Accept: application/json
+
+### Categorias
+POST {{CMWallet_HostAddress}}/api/categorias
+Content-Type: application/json
+
+{ "nome": "Salário", "tipo": 1 }
+
+###
+GET {{CMWallet_HostAddress}}/api/categorias
+Accept: application/json
+
+### Transações
+POST {{CMWallet_HostAddress}}/api/transacoes
+Content-Type: application/json
+
+{ "descricao": "Salário de outubro", "valor": 5000, "tipo": 1, "categoriaId": 1, "contaId": 1, "pago": true }
+
+###
+GET {{CMWallet_HostAddress}}/api/transacoes?contaId=1&pagina=1&tamanhoPagina=20
+Accept: application/json
+
+### Metas
+POST {{CMWallet_HostAddress}}/api/metas
+Content-Type: application/json
+
+{ "valorMeta": 10000, "valorAtual": 0, "dataMeta": "2027-12-31T00:00:00", "contaId": 1 }
+
+###
+GET {{CMWallet_HostAddress}}/api/metas
+Accept: application/json

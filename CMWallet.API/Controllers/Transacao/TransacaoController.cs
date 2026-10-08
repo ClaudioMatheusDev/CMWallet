@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CMWallet.API.Controllers.Transacao
 {
     [ApiController]
-    [Route("api/transacao")]
+    [Route("api/transacoes")]
     public class TransacaoController : ControllerBase
     {
         private readonly ITransacaoService _transacaoService;
@@ -15,38 +15,36 @@ namespace CMWallet.API.Controllers.Transacao
             _transacaoService = transacaoService;
         }
 
-        [HttpPost("criar")]
+        [HttpPost]
         public async Task<IActionResult> CriarTransacao([FromBody] TransacaoCriarDto transacaoDto)
         {
             var transacaoId = await _transacaoService.CriarTransacaoAsync(transacaoDto);
-            return CreatedAtAction(nameof(ListarTransacao), new { transacaoId }, new { TransacaoId = transacaoId });
+            return CreatedAtAction(nameof(BuscarTransacaoPorId), new { transacaoId }, new { TransacaoId = transacaoId });
         }
 
         [HttpGet("{transacaoId:int}")]
-        public async Task<IActionResult> ListarTransacao([FromRoute] int transacaoId)
+        public async Task<ActionResult<TransacaoResponseDto>> BuscarTransacaoPorId(int transacaoId)
         {
-            var transacao = await _transacaoService.BuscarTransacaoPorIdAsync(transacaoId);
-            return Ok(transacao);
+            return Ok(await _transacaoService.BuscarTransacaoPorIdAsync(transacaoId));
         }
 
-        [HttpGet("listar")]
-        public async Task<IActionResult> ListarTransacoes()
+        [HttpGet]
+        public async Task<ActionResult<PagedResult<TransacaoResponseDto>>> ListarTransacoes([FromQuery] TransacaoFiltroDto filtro)
         {
-            var transacoes = await _transacaoService.ListarTransacoesAsync();
-            return Ok(transacoes);
-        }
-
-        [HttpDelete("{transacaoId:int}")]
-        public async Task<IActionResult> DeletarTransacao([FromRoute] int transacaoId)
-        {
-            await _transacaoService.ApagarTransacaoAsync(transacaoId);
-            return NoContent();
+            return Ok(await _transacaoService.ListarTransacoesAsync(filtro));
         }
 
         [HttpPut("{transacaoId:int}")]
-        public async Task<IActionResult> AtualizarTransacao([FromRoute] int transacaoId, [FromBody] TransacaoAtualizarDto transacaoDto)
+        public async Task<IActionResult> AtualizarTransacao(int transacaoId, [FromBody] TransacaoAtualizarDto transacaoDto)
         {
             await _transacaoService.AtualizarTransacaoAsync(transacaoId, transacaoDto);
+            return NoContent();
+        }
+
+        [HttpDelete("{transacaoId:int}")]
+        public async Task<IActionResult> DeletarTransacao(int transacaoId)
+        {
+            await _transacaoService.ApagarTransacaoAsync(transacaoId);
             return NoContent();
         }
     }

@@ -1,13 +1,13 @@
-﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Dtos;
 
 namespace CMWallet.Application.Interfaces
 {
     public interface IContaService
     {
         Task<int> CriarContaAsync(ContaCriarDto dto);
-        Task<ContaReponseDto> BuscarContaPorIdAsync(int contaId);
-        Task<List<ContaReponseDto>> ListarContasAsync();
-        Task ApagarContaAsync (int ContaId);  
-        Task AtualizarContaAsync (int ContaId, ContaAtualizarDto dto);
+        Task<ContaResponseDto> BuscarContaPorIdAsync(int contaId);
+        Task<List<ContaResponseDto>> ListarContasAsync();
+        Task ApagarContaAsync(int contaId);
+        Task AtualizarContaAsync(int contaId, ContaAtualizarDto dto);
     }
 }

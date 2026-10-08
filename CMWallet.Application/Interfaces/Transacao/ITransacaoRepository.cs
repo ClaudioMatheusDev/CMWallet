@@ -1,15 +1,14 @@
-﻿using CMWallet.Domain.Entities;
+using CMWallet.Application.Dtos;
+using CMWallet.Domain.Entities;
 
 namespace CMWallet.Application.Interfaces
 {
     public interface ITransacaoRepository
     {
         Task AdicionarTransacaoAsync(Transacao transacao);
-        Task<Transacao?> BuscarTransacoesPorIdAsync(int TransacaoId);
-        Task<List<Transacao>> ListarTodasTransacoes();
+        Task<Transacao?> BuscarTransacaoPorIdAsync(int transacaoId);
+        Task<(List<Transacao> Itens, int Total)> ListarTransacoesAsync(TransacaoFiltroDto filtro);
         void DeletarTransacao(Transacao transacao);
-        void AtualizarTransacao(Transacao transacao);
         Task SalvarAlteracoesAsync();
-
     }
 }

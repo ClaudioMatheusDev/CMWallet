@@ -1,4 +1,4 @@
-﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Dtos;
 using CMWallet.Application.Exceptions;
 using CMWallet.Application.Interfaces;
 using CMWallet.Domain.Entities;
@@ -7,104 +7,93 @@ namespace CMWallet.Application.Services
 {
     public class MetaService : IMetaService
     {
+        private readonly IMetaRepository _metaRepository;
+        private readonly IContaRepository _contaRepository;
 
-        private readonly IMetaRepository _repository;
-
-        public MetaService(IMetaRepository repository)
+        public MetaService(IMetaRepository metaRepository, IContaRepository contaRepository)
         {
-            _repository = repository;
+            _metaRepository = metaRepository;
+            _contaRepository = contaRepository;
         }
 
         public async Task<int> CriarMetaAsync(MetaCriarDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.ValorMeta.ToString()))
-            {
-                throw new ValidacaoNegocioException("O valor da meta é obrigatório.");
-            }
+            await GarantirContaExisteAsync(dto.ContaId);
 
             var meta = new MetaFinanceira
             {
                 ValorMeta = dto.ValorMeta,
                 ValorAtual = dto.ValorAtual,
-                DataMeta = dto.DataMeta,
+                DataMeta = dto.DataMeta!.Value,
                 ContaId = dto.ContaId
             };
 
-            await _repository.AdicionarMetaAsync(meta);
-            await _repository.SalvarAlteracoesAsync();
+            await _metaRepository.AdicionarMetaAsync(meta);
+            await _metaRepository.SalvarAlteracoesAsync();
 
             return meta.MetaId;
         }
 
         public async Task<MetaResponseDto> BuscarMetaPorIdAsync(int metaId)
         {
-            var meta = await _repository.BuscarMetasPorIdAsync(metaId);
+            var meta = await ObterMetaAsync(metaId);
 
-            if (meta == null)
-            {
-                throw new Exception($"Meta com ID {metaId} não encontrada.");
-            }
-
-            return new MetaResponseDto
-            {
-                MetaId = meta.MetaId,
-                ValorMeta = meta.ValorMeta,
-                ValorAtual = meta.ValorAtual,
-                DataMeta = meta.DataMeta,
-                ContaId = meta.ContaId
-            };
+            return ParaDto(meta);
         }
 
         public async Task<List<MetaResponseDto>> ListarMetasAsync()
         {
-            var metas = await _repository.ListarTodasMetas();
+            var metas = await _metaRepository.ListarTodasMetas();
 
-            return metas.Select(metas => new MetaResponseDto
-            {
-                MetaId = metas.MetaId,
-                ValorMeta = metas.ValorMeta,
-                ValorAtual = metas.ValorAtual,
-                DataMeta = metas.DataMeta,
-                ContaId = metas.ContaId
-            }).ToList();
+            return metas.Select(ParaDto).ToList();
         }
 
-        public async Task ApagarMetaAsync(int MetaId)
+        public async Task ApagarMetaAsync(int metaId)
         {
-            var meta = await _repository.BuscarMetasPorIdAsync(MetaId);
+            var meta = await ObterMetaAsync(metaId);
 
-            if (meta == null)
-            {
-                throw new Exception("MetaId não encontrado.");
-            }
-
-            _repository.DeletarMeta(meta);
-            await _repository.SalvarAlteracoesAsync();
+            _metaRepository.DeletarMeta(meta);
+            await _metaRepository.SalvarAlteracoesAsync();
         }
 
-        public async Task AtualizarMetaAsync(int MetaId, MetaAtualizarDto dto)
+        public async Task AtualizarMetaAsync(int metaId, MetaAtualizarDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.DataMeta.ToString()))
-            {
-                throw new ValidacaoNegocioException("A data da meta é obrigatória.");
-            }
+            var meta = await ObterMetaAsync(metaId);
 
-            var meta = await _repository.BuscarMetasPorIdAsync(MetaId);
-
-            if (meta == null)
+            if (meta.ContaId != dto.ContaId)
             {
-                throw new Exception($"Meta com ID {MetaId} não encontrada.");
+                await GarantirContaExisteAsync(dto.ContaId);
             }
 
             meta.ValorMeta = dto.ValorMeta;
             meta.ValorAtual = dto.ValorAtual;
-            meta.DataMeta = dto.DataMeta;
+            meta.DataMeta = dto.DataMeta!.Value;
             meta.ContaId = dto.ContaId;
 
-            _repository.AtualizarMeta(meta);
-            await _repository.SalvarAlteracoesAsync();
-
+            await _metaRepository.SalvarAlteracoesAsync();
         }
 
+        private async Task<MetaFinanceira> ObterMetaAsync(int metaId)
+        {
+            return await _metaRepository.BuscarMetaPorIdAsync(metaId)
+                ?? throw new MetaNaoEncontradaException(metaId);
+        }
+
+        private async Task GarantirContaExisteAsync(int contaId)
+        {
+            if (await _contaRepository.BuscarContaPorIdAsync(contaId) is null)
+            {
+                throw new ContaNaoEncontradaException(contaId);
+            }
+        }
+
+        private static MetaResponseDto ParaDto(MetaFinanceira meta) => new()
+        {
+            MetaId = meta.MetaId,
+            ValorMeta = meta.ValorMeta,
+            ValorAtual = meta.ValorAtual,
+            DataMeta = meta.DataMeta,
+            ContaId = meta.ContaId
+        };
     }
 }

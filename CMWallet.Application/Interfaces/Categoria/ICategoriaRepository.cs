@@ -1,4 +1,4 @@
-﻿using CMWallet.Domain.Entities;
+using CMWallet.Domain.Entities;
 
 namespace CMWallet.Application.Interfaces
 {
@@ -8,7 +8,6 @@ namespace CMWallet.Application.Interfaces
         Task<Categoria?> BuscarCategoriaPorIdAsync(int categoriaId);
         Task<List<Categoria>> ListarTodasCategorias();
         void DeletarCategoria(Categoria categoria);
-        void AtualizarCategoria(Categoria categoria);
         Task SalvarAlteracoesAsync();
     }
 }
