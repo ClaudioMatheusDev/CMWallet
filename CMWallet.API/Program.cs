@@ -27,6 +27,9 @@ namespace CMWallet.API
             builder.Services.AddScoped<ITransacaoService, TransacaoService>();
             builder.Services.AddScoped<ITransacaoRepository, TransacaoRepository>();
 
+            builder.Services.AddScoped<IMetaService, MetaService>();
+            builder.Services.AddScoped<IMetaRepository, MetaRepository>();
+
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
