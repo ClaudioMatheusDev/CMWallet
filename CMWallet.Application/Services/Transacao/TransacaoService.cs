@@ -1,4 +1,4 @@
-﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Dtos;
 using CMWallet.Application.Exceptions;
 using CMWallet.Application.Interfaces;
 using CMWallet.Domain.Entities;
@@ -7,127 +7,126 @@ namespace CMWallet.Application.Services
 {
     public class TransacaoService : ITransacaoService
     {
-        private readonly ITransacaoRepository _service;
+        private readonly ITransacaoRepository _transacaoRepository;
+        private readonly IContaRepository _contaRepository;
+        private readonly ICategoriaRepository _categoriaRepository;
+        private readonly TimeProvider _timeProvider;
 
-        public TransacaoService(ITransacaoRepository service)
+        public TransacaoService(
+            ITransacaoRepository transacaoRepository,
+            IContaRepository contaRepository,
+            ICategoriaRepository categoriaRepository,
+            TimeProvider timeProvider)
         {
-            _service = service;
+            _transacaoRepository = transacaoRepository;
+            _contaRepository = contaRepository;
+            _categoriaRepository = categoriaRepository;
+            _timeProvider = timeProvider;
         }
 
         public async Task<int> CriarTransacaoAsync(TransacaoCriarDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Descricao))
-            {
-                throw new ValidacaoNegocioException("A descrição da transação é obrigatória.");
-            }
+            await GarantirContaECategoriaExistemAsync(dto.ContaId, dto.CategoriaId);
 
-            if (dto.Valor <= 0)
-            {
-                throw new ValidacaoNegocioException("O valor da transação deve ser maior que zero.");
-            }
+            var agora = _timeProvider.GetUtcNow().UtcDateTime;
 
             var transacao = new Transacao
             {
-                Descricao = dto.Descricao,
+                Descricao = dto.Descricao.Trim(),
                 Valor = dto.Valor,
-                Data = DateTime.UtcNow.AddHours(-3),
+                Data = dto.Data ?? agora,
                 Tipo = dto.Tipo,
                 CategoriaId = dto.CategoriaId,
                 ContaId = dto.ContaId,
                 Pago = dto.Pago,
-                DataCriacao = DateTime.UtcNow.AddHours(-3)
+                DataCriacao = agora
             };
 
-            await _service.AdicionarTransacaoAsync(transacao);
-            await _service.SalvarAlteracoesAsync();
+            await _transacaoRepository.AdicionarTransacaoAsync(transacao);
+            await _transacaoRepository.SalvarAlteracoesAsync();
 
             return transacao.TransacaoId;
         }
 
         public async Task<TransacaoResponseDto> BuscarTransacaoPorIdAsync(int transacaoId)
         {
-            var transacao = await _service.BuscarTransacoesPorIdAsync(transacaoId);
+            var transacao = await ObterTransacaoAsync(transacaoId);
 
-            if (transacao == null)
-            {
-                throw new TransacaoNaoEncontradaException(transacaoId);
-            }
-
-            return new TransacaoResponseDto
-            {
-                TransacaoId = transacao.TransacaoId,
-                Descricao = transacao.Descricao,
-                Valor = transacao.Valor,
-                Data = transacao.Data,
-                Tipo = transacao.Tipo,
-                CategoriaId = transacao.CategoriaId,
-                Categoria = transacao.Categoria,
-                ContaId = transacao.ContaId,
-                Conta = transacao.Conta,
-                Pago = transacao.Pago
-            };
+            return ParaDto(transacao);
         }
 
-        public async Task<List<TransacaoResponseDto>> ListarTransacoesAsync()
+        public async Task<PagedResult<TransacaoResponseDto>> ListarTransacoesAsync(TransacaoFiltroDto filtro)
         {
-            var transacoes = await _service.ListarTodasTransacoes();
+            var (itens, total) = await _transacaoRepository.ListarTransacoesAsync(filtro);
 
-            return transacoes.Select(transacao => new TransacaoResponseDto
+            return new PagedResult<TransacaoResponseDto>
             {
-                TransacaoId = transacao.TransacaoId,
-                Descricao = transacao.Descricao,
-                Valor = transacao.Valor,
-                Data = transacao.Data,
-                Tipo = transacao.Tipo,
-                CategoriaId = transacao.CategoriaId,
-                Categoria = transacao.Categoria,
-                ContaId = transacao.ContaId,
-                Conta = transacao.Conta,
-                Pago = transacao.Pago
-            }).ToList();
+                Itens = itens.Select(ParaDto).ToList(),
+                Pagina = filtro.Pagina,
+                TamanhoPagina = filtro.TamanhoPagina,
+                Total = total
+            };
         }
 
         public async Task ApagarTransacaoAsync(int transacaoId)
         {
-            var transacao = await _service.BuscarTransacoesPorIdAsync(transacaoId);
+            var transacao = await ObterTransacaoAsync(transacaoId);
 
-            if (transacao == null)
-            {
-                throw new TransacaoNaoEncontradaException(transacaoId);
-            }
-
-            _service.DeletarTransacao(transacao);
-            await _service.SalvarAlteracoesAsync();
+            _transacaoRepository.DeletarTransacao(transacao);
+            await _transacaoRepository.SalvarAlteracoesAsync();
         }
 
         public async Task AtualizarTransacaoAsync(int transacaoId, TransacaoAtualizarDto dto)
         {
-            var transacao = await _service.BuscarTransacoesPorIdAsync(transacaoId);
+            var transacao = await ObterTransacaoAsync(transacaoId);
 
-            if (transacao == null)
+            if (transacao.ContaId != dto.ContaId || transacao.CategoriaId != dto.CategoriaId)
             {
-                throw new TransacaoNaoEncontradaException(transacaoId);
+                await GarantirContaECategoriaExistemAsync(dto.ContaId, dto.CategoriaId);
             }
 
-            if (string.IsNullOrWhiteSpace(dto.Descricao))
-            {
-                throw new ValidacaoNegocioException("A descrição da transação é obrigatória.");
-            }
-
-            if (dto.Valor <= 0)
-            {
-                throw new ValidacaoNegocioException("O valor da transação deve ser maior que zero.");
-            }
-
-            transacao.Descricao = dto.Descricao;
+            transacao.Descricao = dto.Descricao.Trim();
             transacao.Valor = dto.Valor;
+            transacao.Data = dto.Data ?? transacao.Data;
             transacao.Tipo = dto.Tipo;
             transacao.CategoriaId = dto.CategoriaId;
             transacao.ContaId = dto.ContaId;
             transacao.Pago = dto.Pago;
 
-            _service.AtualizarTransacao(transacao);
-            await _service.SalvarAlteracoesAsync();
+            await _transacaoRepository.SalvarAlteracoesAsync();
         }
+
+        private async Task<Transacao> ObterTransacaoAsync(int transacaoId)
+        {
+            return await _transacaoRepository.BuscarTransacaoPorIdAsync(transacaoId)
+                ?? throw new TransacaoNaoEncontradaException(transacaoId);
+        }
+
+        private async Task GarantirContaECategoriaExistemAsync(int contaId, int categoriaId)
+        {
+            if (await _contaRepository.BuscarContaPorIdAsync(contaId) is null)
+            {
+                throw new ContaNaoEncontradaException(contaId);
+            }
+
+            if (await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId) is null)
+            {
+                throw new CategoriaNaoEncontradaException(categoriaId);
+            }
+        }
+
+        private static TransacaoResponseDto ParaDto(Transacao transacao) => new()
+        {
+            TransacaoId = transacao.TransacaoId,
+            Descricao = transacao.Descricao,
+            Valor = transacao.Valor,
+            Data = transacao.Data,
+            Tipo = transacao.Tipo,
+            CategoriaId = transacao.CategoriaId,
+            CategoriaNome = transacao.Categoria.Nome,
+            ContaId = transacao.ContaId,
+            ContaNome = transacao.Conta.Nome,
+            Pago = transacao.Pago
+        };
     }
 }

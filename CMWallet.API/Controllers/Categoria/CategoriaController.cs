@@ -1,14 +1,13 @@
-﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Dtos;
 using CMWallet.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CMWallet.API.Controllers.Categoria
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/categorias")]
     public class CategoriaController : ControllerBase
     {
-
         private readonly ICategoriaService _service;
 
         public CategoriaController(ICategoriaService service)
@@ -16,7 +15,7 @@ namespace CMWallet.API.Controllers.Categoria
             _service = service;
         }
 
-        [HttpPost("criar")]
+        [HttpPost]
         public async Task<IActionResult> CriarCategoria([FromBody] CategoriaCriarDto dto)
         {
             var categoriaId = await _service.CriarCategoriaAsync(dto);
@@ -25,25 +24,17 @@ namespace CMWallet.API.Controllers.Categoria
                 new { categoriaId },
                 new { CategoriaId = categoriaId });
         }
+
         [HttpGet("{categoriaId:int}")]
-        public async Task<IActionResult> BuscarCategoriaPorId(int categoriaId)
+        public async Task<ActionResult<CategoriaResponseDto>> BuscarCategoriaPorId(int categoriaId)
         {
-            var categoria = await _service.BuscarCategoriaPorIdAsync(categoriaId);
-            return Ok(categoria);
+            return Ok(await _service.BuscarCategoriaPorIdAsync(categoriaId));
         }
 
-        [HttpGet("listar")]
-        public async Task<IActionResult> ListarCategorias()
+        [HttpGet]
+        public async Task<ActionResult<List<CategoriaResponseDto>>> ListarCategorias()
         {
-            var categorias = await _service.BuscarTodasCategoriasAsync();
-            return Ok(categorias);
-        }
-
-        [HttpDelete("{categoriaId:int}")]
-        public async Task<IActionResult> DeletarCategoria(int categoriaId)
-        {
-            await _service.ApagarCategoriaAsync(categoriaId);
-            return NoContent();
+            return Ok(await _service.BuscarTodasCategoriasAsync());
         }
 
         [HttpPut("{categoriaId:int}")]
@@ -53,5 +44,11 @@ namespace CMWallet.API.Controllers.Categoria
             return NoContent();
         }
 
+        [HttpDelete("{categoriaId:int}")]
+        public async Task<IActionResult> DeletarCategoria(int categoriaId)
+        {
+            await _service.ApagarCategoriaAsync(categoriaId);
+            return NoContent();
+        }
     }
 }
