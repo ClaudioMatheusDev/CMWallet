@@ -1,16 +1,13 @@
-﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Dtos;
 using CMWallet.Application.Interfaces;
-using CMWallet.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CMWallet.API.Controllers.MetaFinanceira
 {
     [ApiController]
-    [Route("api/meta")]
+    [Route("api/metas")]
     public class MetaController : ControllerBase
     {
-
-
         private readonly IMetaService _service;
 
         public MetaController(IMetaService service)
@@ -18,36 +15,25 @@ namespace CMWallet.API.Controllers.MetaFinanceira
             _service = service;
         }
 
-        [HttpPost("criar")]
+        [HttpPost]
         public async Task<IActionResult> CriarMeta([FromBody] MetaCriarDto dto)
         {
             var metaId = await _service.CriarMetaAsync(dto);
-
-            return Ok(new
-            {
-                metaId = metaId
-            });
+            return CreatedAtAction(nameof(BuscarMetaPorId), new { metaId }, new { MetaId = metaId });
         }
 
         [HttpGet("{metaId:int}")]
-        public async Task<IActionResult> BuscarMetaPorId(int metaId)
+        public async Task<ActionResult<MetaResponseDto>> BuscarMetaPorId(int metaId)
         {
-            var meta = await _service.BuscarMetaPorIdAsync(metaId);
-            return Ok(meta);
+            return Ok(await _service.BuscarMetaPorIdAsync(metaId));
         }
 
-        [HttpGet("listar")]
-        public async Task<IActionResult> ListarMetas()
+        [HttpGet]
+        public async Task<ActionResult<List<MetaResponseDto>>> ListarMetas()
         {
-            var metas = await _service.ListarMetasAsync();
-            return Ok(metas);
+            return Ok(await _service.ListarMetasAsync());
         }
-        [HttpDelete("{metaId:int}")]
-        public async Task<IActionResult> DeletarMeta(int metaId)
-        {
-            await _service.ApagarMetaAsync(metaId);
-            return NoContent();
-        }
+
         [HttpPut("{metaId:int}")]
         public async Task<IActionResult> AtualizarMeta(int metaId, [FromBody] MetaAtualizarDto dto)
         {
@@ -55,6 +41,11 @@ namespace CMWallet.API.Controllers.MetaFinanceira
             return NoContent();
         }
 
+        [HttpDelete("{metaId:int}")]
+        public async Task<IActionResult> DeletarMeta(int metaId)
+        {
+            await _service.ApagarMetaAsync(metaId);
+            return NoContent();
+        }
     }
-
 }

@@ -1,4 +1,4 @@
-﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Dtos;
 using CMWallet.Application.Exceptions;
 using CMWallet.Application.Interfaces;
 using CMWallet.Domain.Entities;
@@ -8,26 +8,25 @@ namespace CMWallet.Application.Services
     public class ContaService : IContaService
     {
         private readonly IContaRepository _contaRepository;
+        private readonly TimeProvider _timeProvider;
 
-        public ContaService(IContaRepository contaRepository)
+        public ContaService(IContaRepository contaRepository, TimeProvider timeProvider)
         {
             _contaRepository = contaRepository;
+            _timeProvider = timeProvider;
         }
 
         public async Task<int> CriarContaAsync(ContaCriarDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Nome))
-            {
-                throw new ValidacaoNegocioException("O nome da conta é obrigatório.");
-            }
+            var agora = _timeProvider.GetUtcNow().UtcDateTime;
 
             var conta = new Conta
             {
-                Nome = dto.Nome,
+                Nome = dto.Nome.Trim(),
                 SaldoInicial = dto.SaldoInicial,
                 TipoConta = dto.TipoConta,
-                DataCriacao = DateTime.UtcNow.AddHours(-3),
-                DataAtualizacao = DateTime.UtcNow.AddHours(-3)
+                DataCriacao = agora,
+                DataAtualizacao = agora
             };
 
             await _contaRepository.AdicionarContaAsync(conta);
@@ -36,77 +35,54 @@ namespace CMWallet.Application.Services
             return conta.ContaId;
         }
 
-        public async Task<ContaReponseDto> BuscarContaPorIdAsync(int contaId)
+        public async Task<ContaResponseDto> BuscarContaPorIdAsync(int contaId)
         {
-            var conta = await _contaRepository.BuscarContasPorIdAsync(contaId);
+            var conta = await ObterContaAsync(contaId);
 
-            if (conta == null)
-            {
-                throw new ContaNaoEncontradaException(contaId);
-            }
-
-            return new ContaReponseDto
-            {
-                ContaId = conta.ContaId,
-                Nome = conta.Nome,
-                SaldoInicial = conta.SaldoInicial,
-                TipoConta = conta.TipoConta,
-                DataCriacao = conta.DataCriacao,
-                DataAtualizacao = conta.DataAtualizacao
-            };
+            return ParaDto(conta);
         }
 
-        public async Task<List<ContaReponseDto>> ListarContasAsync()
+        public async Task<List<ContaResponseDto>> ListarContasAsync()
         {
             var contas = await _contaRepository.ListarTodasContas();
 
-            return contas.Select(conta => new ContaReponseDto
-            {
-                ContaId = conta.ContaId,
-                Nome = conta.Nome,
-                SaldoInicial = conta.SaldoInicial,
-                TipoConta = conta.TipoConta,
-                DataCriacao = conta.DataCriacao,
-                DataAtualizacao = conta.DataAtualizacao
-            }).ToList();
+            return contas.Select(ParaDto).ToList();
         }
 
-        public async Task ApagarContaAsync(int ContaId)
+        public async Task ApagarContaAsync(int contaId)
         {
-            var conta = await _contaRepository.BuscarContasPorIdAsync(ContaId);
-
-            if (conta == null)
-            {
-                throw new ContaNaoEncontradaException(ContaId);
-            }
+            var conta = await ObterContaAsync(contaId);
 
             _contaRepository.DeletarConta(conta);
             await _contaRepository.SalvarAlteracoesAsync();
-
         }
 
-        public async Task AtualizarContaAsync(int ContaId, ContaAtualizarDto dto)
+        public async Task AtualizarContaAsync(int contaId, ContaAtualizarDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Nome))
-            {
-                throw new ValidacaoNegocioException("O nome da conta é obrigatório.");
-            }
+            var conta = await ObterContaAsync(contaId);
 
-            var conta = await _contaRepository.BuscarContasPorIdAsync(ContaId);
-
-            if (conta == null)
-            {
-                throw new ContaNaoEncontradaException(ContaId);
-            }
-
-            conta.Nome = dto.Nome;
+            conta.Nome = dto.Nome.Trim();
             conta.SaldoInicial = dto.SaldoInicial;
             conta.TipoConta = dto.TipoConta;
-            conta.DataAtualizacao = DateTime.UtcNow.AddHours(-3);
+            conta.DataAtualizacao = _timeProvider.GetUtcNow().UtcDateTime;
 
-            _contaRepository.AtualizarConta(conta);
             await _contaRepository.SalvarAlteracoesAsync();
-
         }
+
+        private async Task<Conta> ObterContaAsync(int contaId)
+        {
+            return await _contaRepository.BuscarContaPorIdAsync(contaId)
+                ?? throw new ContaNaoEncontradaException(contaId);
+        }
+
+        private static ContaResponseDto ParaDto(Conta conta) => new()
+        {
+            ContaId = conta.ContaId,
+            Nome = conta.Nome,
+            SaldoInicial = conta.SaldoInicial,
+            TipoConta = conta.TipoConta,
+            DataCriacao = conta.DataCriacao,
+            DataAtualizacao = conta.DataAtualizacao
+        };
     }
 }

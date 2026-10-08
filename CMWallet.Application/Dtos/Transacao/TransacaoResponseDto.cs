@@ -1,4 +1,3 @@
-﻿using CMWallet.Domain.Entities;
 using CMWallet.Domain.Enums;
 
 namespace CMWallet.Application.Dtos
@@ -11,10 +10,9 @@ namespace CMWallet.Application.Dtos
         public DateTime Data { get; set; }
         public Tipo Tipo { get; set; }
         public int CategoriaId { get; set; }
-        public Categoria Categoria { get; set; } = null!;
+        public string CategoriaNome { get; set; } = string.Empty;
         public int ContaId { get; set; }
-        public Conta Conta { get; set; } = null!;
+        public string ContaNome { get; set; } = string.Empty;
         public bool Pago { get; set; }
-
     }
 }

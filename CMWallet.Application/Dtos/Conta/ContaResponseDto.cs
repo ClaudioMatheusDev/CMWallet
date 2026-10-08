@@ -1,10 +1,8 @@
-﻿using CMWallet.Domain.Enums;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using CMWallet.Domain.Enums;
 
 namespace CMWallet.Application.Dtos
 {
-    public class ContaReponseDto
+    public class ContaResponseDto
     {
         public int ContaId { get; set; }
         public required string Nome { get; set; }

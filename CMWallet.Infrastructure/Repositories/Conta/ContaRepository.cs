@@ -1,4 +1,4 @@
-﻿using CMWallet.Application.Interfaces;
+using CMWallet.Application.Interfaces;
 using CMWallet.Domain.Entities;
 using CMWallet.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -13,19 +13,15 @@ namespace CMWallet.Infrastructure.Repositories
         {
             _context = context;
         }
+
         public async Task AdicionarContaAsync(Conta conta)
         {
             await _context.Contas.AddAsync(conta);
         }
 
-        public void AtualizarConta(Conta conta)
+        public async Task<Conta?> BuscarContaPorIdAsync(int contaId)
         {
-           _context.Contas.Update(conta);
-        }
-
-        public async Task<Conta?> BuscarContasPorIdAsync(int ContaId)
-        {
-          return await _context.Contas.FirstOrDefaultAsync(c => c.ContaId == ContaId);
+            return await _context.Contas.FirstOrDefaultAsync(c => c.ContaId == contaId);
         }
 
         public void DeletarConta(Conta conta)
@@ -35,7 +31,7 @@ namespace CMWallet.Infrastructure.Repositories
 
         public async Task<List<Conta>> ListarTodasContas()
         {
-           return await _context.Contas.ToListAsync();
+            return await _context.Contas.AsNoTracking().OrderBy(c => c.Nome).ToListAsync();
         }
 
         public async Task SalvarAlteracoesAsync()

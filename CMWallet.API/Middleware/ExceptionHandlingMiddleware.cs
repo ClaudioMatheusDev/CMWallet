@@ -1,5 +1,5 @@
 using CMWallet.Application.Exceptions;
-using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace CMWallet.API.Middleware;
 
@@ -24,22 +24,38 @@ public class ExceptionHandlingMiddleware
         {
             _logger.LogWarning(ex, "Erro de regra de negócio.");
 
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = ex switch
+            var statusCode = ex switch
             {
                 RegistroNaoEncontradoException => StatusCodes.Status404NotFound,
                 ValidacaoNegocioException => StatusCodes.Status400BadRequest,
                 _ => StatusCodes.Status422UnprocessableEntity
             };
 
-            await context.Response.WriteAsJsonAsync(new { message = ex.Message });
+            await EscreverRespostaAsync(context, statusCode, ex.Message);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogWarning(ex, "Violação de integridade ao salvar no banco.");
+
+            await EscreverRespostaAsync(
+                context,
+                StatusCodes.Status409Conflict,
+                "A operação viola uma restrição de integridade (registro em uso ou referência inválida).");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro interno inesperado.");
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await context.Response.WriteAsJsonAsync(new { message = "Ocorreu um erro interno no servidor." });
+
+            await EscreverRespostaAsync(
+                context,
+                StatusCodes.Status500InternalServerError,
+                "Ocorreu um erro interno no servidor.");
         }
+    }
+
+    private static Task EscreverRespostaAsync(HttpContext context, int statusCode, string message)
+    {
+        context.Response.StatusCode = statusCode;
+        return context.Response.WriteAsJsonAsync(new { message });
     }
 }

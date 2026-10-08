@@ -1,4 +1,4 @@
-﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Dtos;
 
 namespace CMWallet.Application.Interfaces
 {
@@ -6,8 +6,8 @@ namespace CMWallet.Application.Interfaces
     {
         Task<int> CriarTransacaoAsync(TransacaoCriarDto dto);
         Task<TransacaoResponseDto> BuscarTransacaoPorIdAsync(int transacaoId);
-        Task<List<TransacaoResponseDto>> ListarTransacoesAsync();
-        Task ApagarTransacaoAsync(int TransacaoId);
-        Task AtualizarTransacaoAsync(int TransacaoId, TransacaoAtualizarDto dto);
+        Task<PagedResult<TransacaoResponseDto>> ListarTransacoesAsync(TransacaoFiltroDto filtro);
+        Task ApagarTransacaoAsync(int transacaoId);
+        Task AtualizarTransacaoAsync(int transacaoId, TransacaoAtualizarDto dto);
     }
 }

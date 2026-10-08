@@ -1,15 +1,13 @@
-﻿using CMWallet.Domain.Entities;
+using CMWallet.Domain.Entities;
 
 namespace CMWallet.Application.Interfaces
 {
     public interface IMetaRepository
     {
         Task AdicionarMetaAsync(MetaFinanceira meta);
-        Task<MetaFinanceira?> BuscarMetasPorIdAsync(int MetaId);
+        Task<MetaFinanceira?> BuscarMetaPorIdAsync(int metaId);
         Task<List<MetaFinanceira>> ListarTodasMetas();
         void DeletarMeta(MetaFinanceira meta);
-        void AtualizarMeta(MetaFinanceira meta);
         Task SalvarAlteracoesAsync();
-
     }
 }

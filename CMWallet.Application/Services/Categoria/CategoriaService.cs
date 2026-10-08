@@ -1,4 +1,4 @@
-﻿using CMWallet.Application.Dtos;
+using CMWallet.Application.Dtos;
 using CMWallet.Application.Exceptions;
 using CMWallet.Application.Interfaces;
 using CMWallet.Domain.Entities;
@@ -18,7 +18,7 @@ namespace CMWallet.Application.Services
         {
             var categoria = new Categoria
             {
-                Nome = dto.Nome,
+                Nome = dto.Nome.Trim(),
                 Tipo = dto.Tipo
             };
 
@@ -30,62 +30,47 @@ namespace CMWallet.Application.Services
 
         public async Task<CategoriaResponseDto> BuscarCategoriaPorIdAsync(int categoriaId)
         {
-            var categoria = await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId);
+            var categoria = await ObterCategoriaAsync(categoriaId);
 
-            if (categoria == null)
-            {
-                throw new CategoriaNaoEncontradaException(categoriaId);
-            }
-
-            return new CategoriaResponseDto
-            {
-                CategoriaId = categoria.CategoriaId,
-                Nome = categoria.Nome,
-                Tipo = categoria.Tipo
-            };
+            return ParaDto(categoria);
         }
+
         public async Task<List<CategoriaResponseDto>> BuscarTodasCategoriasAsync()
         {
             var categorias = await _categoriaRepository.ListarTodasCategorias();
 
-            return categorias.Select(c => new CategoriaResponseDto
-            {
-                CategoriaId = c.CategoriaId,
-                Nome = c.Nome,
-                Tipo = c.Tipo
-            }).ToList();
+            return categorias.Select(ParaDto).ToList();
         }
 
         public async Task ApagarCategoriaAsync(int categoriaId)
         {
-            var categoria = await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId);
-
-            if (categoria == null)
-            {
-                throw new CategoriaNaoEncontradaException(categoriaId);
-            }
+            var categoria = await ObterCategoriaAsync(categoriaId);
 
             _categoriaRepository.DeletarCategoria(categoria);
             await _categoriaRepository.SalvarAlteracoesAsync();
-
-
         }
 
         public async Task AtualizarCategoriaAsync(int categoriaId, CategoriaAtualizarDto dto)
         {
-            var categoria = await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId);
+            var categoria = await ObterCategoriaAsync(categoriaId);
 
-            if (categoria == null)
-            {
-                throw new CategoriaNaoEncontradaException(categoriaId);
-            }
-
-            categoria.Nome = dto.Nome;
+            categoria.Nome = dto.Nome.Trim();
             categoria.Tipo = dto.Tipo;
 
-            _categoriaRepository.AtualizarCategoria(categoria);
             await _categoriaRepository.SalvarAlteracoesAsync();
-
         }
+
+        private async Task<Categoria> ObterCategoriaAsync(int categoriaId)
+        {
+            return await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId)
+                ?? throw new CategoriaNaoEncontradaException(categoriaId);
+        }
+
+        private static CategoriaResponseDto ParaDto(Categoria categoria) => new()
+        {
+            CategoriaId = categoria.CategoriaId,
+            Nome = categoria.Nome,
+            Tipo = categoria.Tipo
+        };
     }
 }

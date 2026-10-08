@@ -1,4 +1,5 @@
-﻿using CMWallet.Application.Interfaces;
+using CMWallet.Application.Interfaces;
+using CMWallet.Domain.Entities;
 using CMWallet.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,26 +14,22 @@ namespace CMWallet.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task AdicionarCategoriaAsync(Domain.Entities.Categoria categoria)
+        public async Task AdicionarCategoriaAsync(Categoria categoria)
         {
             await _context.Categorias.AddAsync(categoria);
         }
 
-        public async Task<Domain.Entities.Categoria?> BuscarCategoriaPorIdAsync(int categoriaId)
+        public async Task<Categoria?> BuscarCategoriaPorIdAsync(int categoriaId)
         {
-           return await _context.Categorias.FirstOrDefaultAsync(c => c.CategoriaId == categoriaId);
+            return await _context.Categorias.FirstOrDefaultAsync(c => c.CategoriaId == categoriaId);
         }
 
-        public async Task<List<Domain.Entities.Categoria>> ListarTodasCategorias()
+        public async Task<List<Categoria>> ListarTodasCategorias()
         {
-            return await _context.Categorias.ToListAsync();
-        }
-        public void AtualizarCategoria(Domain.Entities.Categoria categoria)
-        {
-             _context.Categorias.Update(categoria);
+            return await _context.Categorias.AsNoTracking().OrderBy(c => c.Nome).ToListAsync();
         }
 
-        public void DeletarCategoria(Domain.Entities.Categoria categoria)
+        public void DeletarCategoria(Categoria categoria)
         {
             _context.Categorias.Remove(categoria);
         }
@@ -41,6 +38,5 @@ namespace CMWallet.Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
-
-   }
+    }
 }
