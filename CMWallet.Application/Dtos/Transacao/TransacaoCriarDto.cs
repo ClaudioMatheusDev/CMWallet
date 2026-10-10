@@ -9,7 +9,7 @@ namespace CMWallet.Application.Dtos
         [StringLength(300)]
         public string Descricao { get; set; } = string.Empty;
 
-        [Range(typeof(decimal), "0.01", "9999999999999999", ErrorMessage = "O valor da transação deve ser maior que zero.")]
+        [Range(typeof(decimal), "0.01", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "O valor da transação deve ser maior que zero.")]
         public decimal Valor { get; set; }
 
         /// <summary>Data da transação. Quando omitida, assume o momento atual (UTC).</summary>

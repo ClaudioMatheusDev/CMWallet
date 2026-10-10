@@ -4,10 +4,10 @@ namespace CMWallet.Application.Dtos
 {
     public class MetaAtualizarDto
     {
-        [Range(typeof(decimal), "0.01", "9999999999999999", ErrorMessage = "O valor da meta deve ser maior que zero.")]
+        [Range(typeof(decimal), "0.01", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "O valor da meta deve ser maior que zero.")]
         public decimal ValorMeta { get; set; }
 
-        [Range(typeof(decimal), "0", "9999999999999999", ErrorMessage = "O valor atual não pode ser negativo.")]
+        [Range(typeof(decimal), "0", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "O valor atual não pode ser negativo.")]
         public decimal ValorAtual { get; set; }
 
         [Required(ErrorMessage = "A data da meta é obrigatória.")]
