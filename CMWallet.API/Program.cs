@@ -13,6 +13,16 @@ namespace CMWallet.API
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AngularPolicy", policy =>
+                {
+                    policy
+                        .WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
             builder.Services.AddApplication();
             builder.Services.AddInfrastructure(builder.Configuration);
             builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>();
@@ -27,6 +37,7 @@ namespace CMWallet.API
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("AngularPolicy");
             app.UseAuthorization();
             app.MapControllers();
             app.MapHealthChecks("/health");

@@ -1,0 +1,22 @@
+
+<section aria-labelledby="contas-titulo">
+  <h2 id="contas-titulo">Minhas contas</h2>
+
+  @if (carregando) {
+    <p role="status">Carregando contas...</p>
+  } @else if (erro) {
+    <p role="alert">{{ erro }}</p>
+  } @else if (contas.length === 0) {
+    <p>Nenhuma conta cadastrada.</p>
+  } @else {
+    <ul>
+      @for (conta of contas; track conta.contaId) {
+        <li>
+          <strong>{{ conta.nome }}</strong>
+          <span>Saldo inicial: {{ conta.saldoInicial | currency: 'BRL' }}</span>
+          <span>Tipo: {{ tipoContaLabels[conta.tipoConta] }}</span>
+        </li>
+      }
+    </ul>
+  }
+</section>
