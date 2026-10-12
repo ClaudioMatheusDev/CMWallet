@@ -1,0 +1,46 @@
+<form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+  <div class="dialog__body">
+    <fieldset class="segmented">
+      <legend class="visually-hidden">Tipo de categoria</legend>
+      <label class="segmented__option">
+        <input type="radio" formControlName="tipo" [value]="TipoMovimento.Saida" />
+        <span>Saída</span>
+      </label>
+      <label class="segmented__option">
+        <input type="radio" formControlName="tipo" [value]="TipoMovimento.Entrada" />
+        <span>Entrada</span>
+      </label>
+    </fieldset>
+
+    <div class="field">
+      <label class="field__label" for="categoria-nome">Nome</label>
+      <input
+        id="categoria-nome"
+        class="input"
+        formControlName="nome"
+        maxlength="200"
+        autocomplete="off"
+        placeholder="Ex.: Alimentação"
+        autofocus
+        [attr.aria-invalid]="invalido('nome')"
+      />
+      @if (invalido('nome')) {
+        <p class="field__error">Informe o nome da categoria.</p>
+      }
+    </div>
+
+    @if (erro(); as mensagem) {
+      <div class="alert alert--erro" role="alert">
+        <app-icon nome="alerta" [tamanho]="18" />
+        <p class="alert__text">{{ mensagem }}</p>
+      </div>
+    }
+  </div>
+
+  <footer class="dialog__footer">
+    <button type="button" class="btn btn--secondary" (click)="cancelado.emit()">Cancelar</button>
+    <button type="submit" class="btn btn--primary" [disabled]="salvando()">
+      {{ salvando() ? 'Salvando…' : (categoria() ? 'Salvar alterações' : 'Criar categoria') }}
+    </button>
+  </footer>
+</form>

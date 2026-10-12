@@ -1,0 +1,201 @@
+<div class="page">
+  <app-page-header titulo="Visão geral" [descricao]="'Resumo de ' + mesAtual">
+    <a class="btn btn--primary" routerLink="/transacoes" [queryParams]="{ nova: 1 }">
+      <app-icon nome="plus" />
+      Nova transação
+    </a>
+  </app-page-header>
+
+  @switch (estado()) {
+    @case ('carregando') {
+      <div class="kpi-grid" aria-busy="true" aria-label="Carregando resumo">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="kpi">
+            <span class="skeleton" [style.width.%]="40"></span>
+            <span class="skeleton skeleton--lg" [style.width.%]="65"></span>
+            <span class="skeleton" [style.width.%]="50"></span>
+          </div>
+        }
+      </div>
+    }
+
+    @case ('erro') {
+      <div class="alert alert--erro" role="alert">
+        <app-icon nome="alerta" [tamanho]="18" />
+        <p class="alert__text">{{ erro() }}</p>
+        <button type="button" class="btn btn--secondary btn--sm" (click)="carregar()">
+          Tentar novamente
+        </button>
+      </div>
+    }
+
+    @default {
+      @if (contas().length === 0) {
+        <section class="card">
+          <app-empty-state
+            icone="contas"
+            titulo="Cadastre sua primeira conta"
+            descricao="Contas representam onde seu dinheiro está: conta corrente, poupança ou dinheiro em espécie. Com uma conta e algumas categorias você já pode registrar transações."
+          >
+            <a class="btn btn--primary" routerLink="/contas">Cadastrar conta</a>
+          </app-empty-state>
+        </section>
+      } @else {
+        <section class="kpi-grid" aria-label="Indicadores do mês">
+          <div class="kpi">
+            <span class="kpi__label">Entradas</span>
+            <span class="kpi__value num">{{ totalEntradas() | currency: 'BRL' }}</span>
+            <span class="kpi__meta">{{ lancamentos(qtdEntradas()) }} no mês</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__label">Saídas</span>
+            <span class="kpi__value num">{{ totalSaidas() | currency: 'BRL' }}</span>
+            <span class="kpi__meta">{{ lancamentos(qtdSaidas()) }} no mês</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__label">Resultado</span>
+            <span
+              class="kpi__value num"
+              [class.positive]="resultado() > 0"
+              [class.negative]="resultado() < 0"
+            >
+              {{ resultado() | currency: 'BRL' }}
+            </span>
+            <span class="kpi__meta">Entradas menos saídas</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__label">A pagar</span>
+            <span class="kpi__value num">{{ totalPendente() | currency: 'BRL' }}</span>
+            <span class="kpi__meta">
+              {{ lancamentos(qtdPendentes()) }} {{ qtdPendentes() === 1 ? 'pendente' : 'pendentes' }}
+            </span>
+          </div>
+        </section>
+
+        <div class="dashboard-grid">
+          <section class="card">
+            <header class="card__header">
+              <h2 class="card__title">Últimas transações</h2>
+              <a class="link-action" routerLink="/transacoes">
+                Ver todas
+                <app-icon nome="seta-direita" [tamanho]="14" />
+              </a>
+            </header>
+            @if (recentes().length) {
+              <ul class="list">
+                @for (t of recentes(); track t.transacaoId) {
+                  <li class="list__item">
+                    <span class="tx-icon" [class.tx-icon--entrada]="t.tipo === TipoMovimento.Entrada">
+                      <app-icon [nome]="t.tipo === TipoMovimento.Entrada ? 'entrada' : 'saida'" />
+                    </span>
+                    <div class="list__main">
+                      <span class="list__title">{{ t.descricao }}</span>
+                      <span class="list__meta">{{ t.categoriaNome }} · {{ t.contaNome }}</span>
+                    </div>
+                    <div class="list__end">
+                      <span class="list__value num" [class.positive]="t.tipo === TipoMovimento.Entrada">
+                        {{ t.tipo === TipoMovimento.Entrada ? '+' : '−' }} {{ t.valor | currency: 'BRL' }}
+                      </span>
+                      <span class="list__meta">{{ t.data | date: 'dd/MM/yyyy' }}</span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="card__empty">
+                Nenhuma transação registrada ainda.
+                <a routerLink="/transacoes" [queryParams]="{ nova: 1 }">Registrar a primeira</a>
+              </p>
+            }
+          </section>
+
+          <section class="card">
+            <header class="card__header">
+              <div>
+                <h2 class="card__title">Gastos por categoria</h2>
+                <p class="card__subtitle">Saídas de {{ mesAtual }}</p>
+              </div>
+            </header>
+            @if (gastosPorCategoria().length) {
+              <ul class="breakdown">
+                @for (g of gastosPorCategoria(); track g.nome) {
+                  <li class="breakdown__item">
+                    <div class="breakdown__row">
+                      <span class="breakdown__label">{{ g.nome }}</span>
+                      <span class="num">{{ g.valor | currency: 'BRL' }}</span>
+                    </div>
+                    <div class="breakdown__track">
+                      <span class="breakdown__bar" [style.width.%]="g.percentual"></span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="card__empty">Nenhuma saída registrada neste mês.</p>
+            }
+          </section>
+
+          <section class="card">
+            <header class="card__header">
+              <h2 class="card__title">Metas em andamento</h2>
+              <a class="link-action" routerLink="/metas">
+                Ver metas
+                <app-icon nome="seta-direita" [tamanho]="14" />
+              </a>
+            </header>
+            @if (metas().length) {
+              <ul class="list">
+                @for (m of metas(); track m.meta.metaId) {
+                  <li class="list__item list__item--stacked">
+                    <div class="list__row">
+                      <span class="list__title">{{ m.conta }}</span>
+                      <span class="num text-secondary">
+                        {{ m.meta.valorAtual | currency: 'BRL' }} de
+                        {{ m.meta.valorMeta | currency: 'BRL' }}
+                      </span>
+                    </div>
+                    <div class="progress">
+                      <span class="progress__bar" [style.width.%]="m.percentual"></span>
+                    </div>
+                    <span class="list__meta" [class.negative]="m.situacao === 'vencida'">
+                      {{ m.prazo }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="card__empty">
+                Nenhuma meta em andamento. <a routerLink="/metas">Criar meta</a>
+              </p>
+            }
+          </section>
+
+          <section class="card">
+            <header class="card__header">
+              <h2 class="card__title">Contas</h2>
+              <a class="link-action" routerLink="/contas">
+                Gerenciar
+                <app-icon nome="seta-direita" [tamanho]="14" />
+              </a>
+            </header>
+            <ul class="list">
+              @for (c of contas(); track c.contaId) {
+                <li class="list__item">
+                  <div class="list__main">
+                    <span class="list__title">{{ c.nome }}</span>
+                    <span class="list__meta">{{ rotuloTipoConta(c.tipoConta) }}</span>
+                  </div>
+                  <span class="list__value num">{{ c.saldoInicial | currency: 'BRL' }}</span>
+                </li>
+              }
+            </ul>
+            <footer class="card__footer">
+              <span>Saldo inicial total</span>
+              <strong class="num">{{ saldoInicialTotal() | currency: 'BRL' }}</strong>
+            </footer>
+          </section>
+        </div>
+      }
+    }
+  }
+</div>

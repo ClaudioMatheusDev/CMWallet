@@ -1,14 +1,32 @@
 import { Routes } from '@angular/router';
-import { ContasComponent } from './pages/Contas/contas.component';
-import { TransacoesComponent } from './pages/Transacoes/transacoes.component';
-import { CategoriasComponent } from './pages/Categorias/categorias.component';
-import { MetasComponent } from './pages/Metas/metas.component';
 
 export const routes: Routes = [
-  { path: '', component: ContasComponent, title: 'Visão geral | CMWallet' },
-  { path: 'contas', component: ContasComponent, title: 'Contas | CMWallet' },
-  { path: 'transacoes', component: TransacoesComponent, title: 'Transações | CMWallet' },
-  { path: 'categorias', component: CategoriasComponent, title: 'Categorias | CMWallet' },
-  { path: 'metas', component: MetasComponent, title: 'Metas financeiras | CMWallet' },
+  {
+    path: '',
+    title: 'Visão geral · CMWallet',
+    loadComponent: () => import('./features/visao-geral/visao-geral').then((m) => m.VisaoGeral),
+  },
+  {
+    path: 'transacoes',
+    title: 'Transações · CMWallet',
+    loadComponent: () =>
+      import('./features/transacoes/transacoes-page').then((m) => m.TransacoesPage),
+  },
+  {
+    path: 'metas',
+    title: 'Metas · CMWallet',
+    loadComponent: () => import('./features/metas/metas-page').then((m) => m.MetasPage),
+  },
+  {
+    path: 'contas',
+    title: 'Contas · CMWallet',
+    loadComponent: () => import('./features/contas/contas-page').then((m) => m.ContasPage),
+  },
+  {
+    path: 'categorias',
+    title: 'Categorias · CMWallet',
+    loadComponent: () =>
+      import('./features/categorias/categorias-page').then((m) => m.CategoriasPage),
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -1,0 +1,64 @@
+<form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+  <div class="dialog__body">
+    <div class="field">
+      <label class="field__label" for="conta-nome">Nome</label>
+      <input
+        id="conta-nome"
+        class="input"
+        formControlName="nome"
+        maxlength="200"
+        autocomplete="off"
+        placeholder="Ex.: Banco do Brasil"
+        autofocus
+        [attr.aria-invalid]="invalido('nome')"
+      />
+      @if (invalido('nome')) {
+        <p class="field__error">Informe o nome da conta.</p>
+      }
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label class="field__label" for="conta-tipo">Tipo</label>
+        <select id="conta-tipo" class="select" formControlName="tipoConta">
+          @for (t of tiposConta; track t.valor) {
+            <option [ngValue]="t.valor">{{ t.rotulo }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="conta-saldo">Saldo inicial</label>
+        <div class="input-group">
+          <span class="input-group__addon">R$</span>
+          <input
+            id="conta-saldo"
+            class="input num"
+            type="number"
+            inputmode="decimal"
+            step="0.01"
+            formControlName="saldoInicial"
+            [attr.aria-invalid]="invalido('saldoInicial')"
+          />
+        </div>
+        @if (invalido('saldoInicial')) {
+          <p class="field__error">Informe o saldo inicial (pode ser zero).</p>
+        }
+      </div>
+    </div>
+
+    @if (erro(); as mensagem) {
+      <div class="alert alert--erro" role="alert">
+        <app-icon nome="alerta" [tamanho]="18" />
+        <p class="alert__text">{{ mensagem }}</p>
+      </div>
+    }
+  </div>
+
+  <footer class="dialog__footer">
+    <button type="button" class="btn btn--secondary" (click)="cancelado.emit()">Cancelar</button>
+    <button type="submit" class="btn btn--primary" [disabled]="salvando()">
+      {{ salvando() ? 'Salvando…' : (conta() ? 'Salvar alterações' : 'Cadastrar conta') }}
+    </button>
+  </footer>
+</form>

@@ -1,0 +1,93 @@
+<form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+  <div class="dialog__body">
+    <div class="form-grid">
+      <div class="field">
+        <label class="field__label" for="meta-valor">Valor da meta</label>
+        <div class="input-group">
+          <span class="input-group__addon">R$</span>
+          <input
+            id="meta-valor"
+            class="input num"
+            type="number"
+            inputmode="decimal"
+            min="0.01"
+            step="0.01"
+            placeholder="0,00"
+            formControlName="valorMeta"
+            autofocus
+            [attr.aria-invalid]="invalido('valorMeta')"
+          />
+        </div>
+        @if (invalido('valorMeta')) {
+          <p class="field__error">Informe um valor maior que zero.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="meta-atual">Valor já guardado</label>
+        <div class="input-group">
+          <span class="input-group__addon">R$</span>
+          <input
+            id="meta-atual"
+            class="input num"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="0.01"
+            formControlName="valorAtual"
+            [attr.aria-invalid]="invalido('valorAtual')"
+          />
+        </div>
+        @if (invalido('valorAtual')) {
+          <p class="field__error">O valor não pode ser negativo.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="meta-data">Prazo</label>
+        <input
+          id="meta-data"
+          class="input"
+          type="date"
+          formControlName="dataMeta"
+          [attr.aria-invalid]="invalido('dataMeta')"
+        />
+        @if (invalido('dataMeta')) {
+          <p class="field__error">Informe o prazo.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="meta-conta">Conta</label>
+        <select
+          id="meta-conta"
+          class="select"
+          formControlName="contaId"
+          [attr.aria-invalid]="invalido('contaId')"
+        >
+          <option [ngValue]="null" disabled>Selecione</option>
+          @for (c of contas(); track c.contaId) {
+            <option [ngValue]="c.contaId">{{ c.nome }}</option>
+          }
+        </select>
+        @if (invalido('contaId')) {
+          <p class="field__error">Selecione uma conta.</p>
+        }
+      </div>
+    </div>
+
+    @if (erro(); as mensagem) {
+      <div class="alert alert--erro" role="alert">
+        <app-icon nome="alerta" [tamanho]="18" />
+        <p class="alert__text">{{ mensagem }}</p>
+      </div>
+    }
+  </div>
+
+  <footer class="dialog__footer">
+    <button type="button" class="btn btn--secondary" (click)="cancelado.emit()">Cancelar</button>
+    <button type="submit" class="btn btn--primary" [disabled]="salvando()">
+      {{ salvando() ? 'Salvando…' : (meta() ? 'Salvar alterações' : 'Criar meta') }}
+    </button>
+  </footer>
+</form>
