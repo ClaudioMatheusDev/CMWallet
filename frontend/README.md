@@ -1,59 +1,43 @@
-# Frontend
+# CMWallet — Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.2.
+Aplicação Angular 22 (componentes standalone, signals, detecção de mudanças sem Zone.js).
 
-## Development server
-
-To start a local development server, run:
+## Executando
 
 ```bash
-ng serve
+npm install
+npm start            # http://localhost:4200
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+O `ng serve` encaminha `/api` para `http://localhost:5161` (veja `proxy.conf.json`).
+Suba a API antes com `dotnet run --project CMWallet.API`.
 
-## Code scaffolding
+| Comando         | O que faz                       |
+| --------------- | ------------------------------- |
+| `npm start`     | Servidor de desenvolvimento     |
+| `npm run build` | Build de produção em `dist/`    |
+| `npm test`      | Testes unitários (Vitest)       |
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Estrutura
 
-```bash
-ng generate component component-name
+```text
+src/
+├── app/
+│   ├── core/                 # Sem UI: modelos, serviços HTTP, utilitários
+│   │   ├── services/         # Um serviço por recurso da API
+│   │   ├── feedback/         # Toasts e diálogo de confirmação
+│   │   ├── datas.ts          # Datas no fuso local (yyyy-MM-dd)
+│   │   └── http-error.ts     # Mensagens a partir de erros da API
+│   ├── shared/               # Componentes visuais reutilizáveis
+│   └── features/             # Uma pasta por tela (rotas com lazy loading)
+└── styles/                   # Design system: tokens, base, layout, componentes
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Convenções
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **Estado** em `signal`/`computed`; nada de `ChangeDetectorRef` manual.
+- **Formulários** reativos e tipados, com validação espelhando os DTOs da API.
+- **Estilos** globais em `src/styles`, organizados por camada e baseados nos tokens de
+  `tokens.css` (tema claro e escuro via `prefers-color-scheme`).
+- **Datas** trafegam como `yyyy-MM-dd`. Use `core/datas.ts`; `toISOString()` converte para UTC
+  e adianta o dia à noite no Brasil.

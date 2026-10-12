@@ -1,0 +1,98 @@
+<div class="page">
+  <app-page-header
+    titulo="Categorias"
+    descricao="Classifique entradas e saídas para entender para onde vai o seu dinheiro."
+  >
+    <button type="button" class="btn btn--primary" (click)="novaCategoria()">
+      <app-icon nome="plus" />
+      Nova categoria
+    </button>
+  </app-page-header>
+
+  @if (erro(); as mensagem) {
+    <div class="alert alert--erro" role="alert">
+      <app-icon nome="alerta" [tamanho]="18" />
+      <p class="alert__text">{{ mensagem }}</p>
+      <button type="button" class="btn btn--secondary btn--sm" (click)="carregar()">
+        Tentar novamente
+      </button>
+    </div>
+  } @else {
+    <div class="split">
+      @for (grupo of grupos(); track grupo.tipo) {
+        <section class="card">
+          <header class="card__header">
+            <div>
+              <h2 class="card__title">
+                <span
+                  class="dot"
+                  [class.dot--entrada]="grupo.tipo === TipoMovimento.Entrada"
+                  aria-hidden="true"
+                ></span>
+                {{ grupo.titulo }}
+                @if (!carregando()) {
+                  <span class="count">{{ grupo.itens.length }}</span>
+                }
+              </h2>
+              <p class="card__subtitle">{{ grupo.descricao }}</p>
+            </div>
+            <button type="button" class="btn btn--ghost btn--sm" (click)="novaCategoria(grupo.tipo)">
+              <app-icon nome="plus" />
+              Adicionar
+            </button>
+          </header>
+
+          @if (carregando() && categorias().length === 0) {
+            <app-skeleton-list [quantidade]="3" />
+          } @else if (grupo.itens.length) {
+            <ul class="list">
+              @for (c of grupo.itens; track c.categoriaId) {
+                <li class="list__item list__item--hoverable">
+                  <span class="list__title list__main">{{ c.nome }}</span>
+                  <div class="list__actions">
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      title="Editar"
+                      [attr.aria-label]="'Editar ' + c.nome"
+                      (click)="editar(c)"
+                    >
+                      <app-icon nome="editar" />
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-btn icon-btn--danger"
+                      title="Excluir"
+                      [attr.aria-label]="'Excluir ' + c.nome"
+                      (click)="excluir(c)"
+                    >
+                      <app-icon nome="excluir" />
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="card__empty">Nenhuma categoria de {{ grupo.titulo.toLowerCase() }} cadastrada.</p>
+          }
+        </section>
+      }
+    </div>
+  }
+</div>
+
+<app-dialog
+  [aberto]="emEdicao() !== null"
+  [titulo]="tituloFormulario()"
+  [largura]="440"
+  (fechado)="fecharFormulario()"
+>
+  @if (emEdicao(); as edicao) {
+    <app-categoria-form
+      [categoria]="edicao.categoria"
+      [tipoInicial]="edicao.tipo"
+      (salvo)="aoSalvar()"
+      (cancelado)="fecharFormulario()"
+    />
+  }
+</app-dialog>

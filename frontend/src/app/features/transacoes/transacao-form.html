@@ -1,0 +1,129 @@
+<form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+  <div class="dialog__body">
+    <fieldset class="segmented">
+      <legend class="visually-hidden">Tipo de transação</legend>
+      <label class="segmented__option">
+        <input type="radio" formControlName="tipo" [value]="TipoMovimento.Saida" />
+        <span>Saída</span>
+      </label>
+      <label class="segmented__option">
+        <input type="radio" formControlName="tipo" [value]="TipoMovimento.Entrada" />
+        <span>Entrada</span>
+      </label>
+    </fieldset>
+
+    <div class="field">
+      <label class="field__label" for="tx-descricao">Descrição</label>
+      <input
+        id="tx-descricao"
+        class="input"
+        formControlName="descricao"
+        maxlength="300"
+        autocomplete="off"
+        placeholder="Ex.: Supermercado"
+        autofocus
+        [attr.aria-invalid]="invalido('descricao')"
+      />
+      @if (invalido('descricao')) {
+        <p class="field__error">Informe a descrição.</p>
+      }
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label class="field__label" for="tx-valor">Valor</label>
+        <div class="input-group">
+          <span class="input-group__addon">R$</span>
+          <input
+            id="tx-valor"
+            class="input num"
+            type="number"
+            inputmode="decimal"
+            min="0.01"
+            step="0.01"
+            placeholder="0,00"
+            formControlName="valor"
+            [attr.aria-invalid]="invalido('valor')"
+          />
+        </div>
+        @if (invalido('valor')) {
+          <p class="field__error">Informe um valor maior que zero.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="tx-data">Data</label>
+        <input
+          id="tx-data"
+          class="input"
+          type="date"
+          formControlName="data"
+          [attr.aria-invalid]="invalido('data')"
+        />
+        @if (invalido('data')) {
+          <p class="field__error">Informe a data.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="tx-categoria">Categoria</label>
+        <select
+          id="tx-categoria"
+          class="select"
+          formControlName="categoriaId"
+          [attr.aria-invalid]="invalido('categoriaId')"
+        >
+          <option [ngValue]="null" disabled>Selecione</option>
+          @for (c of categoriasDoTipo(); track c.categoriaId) {
+            <option [ngValue]="c.categoriaId">{{ c.nome }}</option>
+          }
+        </select>
+        @if (categoriasDoTipo().length === 0) {
+          <p class="field__hint">
+            Nenhuma categoria de {{ tipo() === TipoMovimento.Entrada ? 'entrada' : 'saída' }}
+            cadastrada.
+          </p>
+        } @else if (invalido('categoriaId')) {
+          <p class="field__error">Selecione uma categoria.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="tx-conta">Conta</label>
+        <select
+          id="tx-conta"
+          class="select"
+          formControlName="contaId"
+          [attr.aria-invalid]="invalido('contaId')"
+        >
+          <option [ngValue]="null" disabled>Selecione</option>
+          @for (c of contas(); track c.contaId) {
+            <option [ngValue]="c.contaId">{{ c.nome }}</option>
+          }
+        </select>
+        @if (invalido('contaId')) {
+          <p class="field__error">Selecione uma conta.</p>
+        }
+      </div>
+    </div>
+
+    <label class="checkbox">
+      <input type="checkbox" formControlName="pago" />
+      <span>{{ tipo() === TipoMovimento.Entrada ? 'Valor já recebido' : 'Valor já pago' }}</span>
+    </label>
+
+    @if (erro(); as mensagem) {
+      <div class="alert alert--erro" role="alert">
+        <app-icon nome="alerta" [tamanho]="18" />
+        <p class="alert__text">{{ mensagem }}</p>
+      </div>
+    }
+  </div>
+
+  <footer class="dialog__footer">
+    <button type="button" class="btn btn--secondary" (click)="cancelado.emit()">Cancelar</button>
+    <button type="submit" class="btn btn--primary" [disabled]="salvando()">
+      {{ salvando() ? 'Salvando…' : (transacao() ? 'Salvar alterações' : 'Registrar transação') }}
+    </button>
+  </footer>
+</form>

@@ -1,0 +1,174 @@
+<div class="page">
+  <app-page-header titulo="Metas" descricao="Objetivos de economia com valor e prazo definidos.">
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="!carregando() && contas().length === 0"
+      (click)="novaMeta()"
+    >
+      <app-icon nome="plus" />
+      Nova meta
+    </button>
+  </app-page-header>
+
+  @if (erro(); as mensagem) {
+    <div class="alert alert--erro" role="alert">
+      <app-icon nome="alerta" [tamanho]="18" />
+      <p class="alert__text">{{ mensagem }}</p>
+      <button type="button" class="btn btn--secondary btn--sm" (click)="carregar()">
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (carregando() && metas().length === 0) {
+    <div class="goal-grid" aria-busy="true" aria-label="Carregando metas">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="card goal">
+          <span class="skeleton" [style.width.%]="35"></span>
+          <span class="skeleton skeleton--lg" [style.width.%]="55"></span>
+          <span class="skeleton" [style.width.%]="100"></span>
+          <span class="skeleton" [style.width.%]="60"></span>
+        </div>
+      }
+    </div>
+  } @else if (contas().length === 0) {
+    <section class="card">
+      <app-empty-state
+        icone="metas"
+        titulo="Cadastre uma conta primeiro"
+        descricao="Toda meta fica vinculada a uma conta, onde o valor é guardado."
+      >
+        <a class="btn btn--primary" routerLink="/contas">Ir para contas</a>
+      </app-empty-state>
+    </section>
+  } @else if (metas().length === 0) {
+    <section class="card">
+      <app-empty-state
+        icone="metas"
+        titulo="Nenhuma meta criada"
+        descricao="Defina quanto quer juntar e até quando para acompanhar o progresso."
+      >
+        <button type="button" class="btn btn--primary" (click)="novaMeta()">
+          <app-icon nome="plus" />
+          Nova meta
+        </button>
+      </app-empty-state>
+    </section>
+  } @else {
+    <section class="kpi-grid kpi-grid--3" aria-label="Resumo das metas">
+      <div class="kpi">
+        <span class="kpi__label">Total guardado</span>
+        <span class="kpi__value num">{{ totalGuardado() | currency: 'BRL' }}</span>
+        <span class="kpi__meta">de {{ totalObjetivo() | currency: 'BRL' }}</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi__label">Progresso geral</span>
+        <span class="kpi__value num">{{ progressoGeral() | number: '1.0-0' }}%</span>
+        <div class="progress kpi__progress">
+          <span class="progress__bar" [style.width.%]="progressoGeral()"></span>
+        </div>
+      </div>
+      <div class="kpi">
+        <span class="kpi__label">Metas concluídas</span>
+        <span class="kpi__value num">{{ concluidas() }} de {{ metas().length }}</span>
+        <span class="kpi__meta">Valor guardado igual ou acima do objetivo</span>
+      </div>
+    </section>
+
+    <div class="goal-grid">
+      @for (r of resumos(); track r.meta.metaId) {
+        <article class="card goal">
+          <div class="goal__top">
+            <div>
+              <p class="goal__account">{{ r.conta }}</p>
+              <p class="goal__target num">{{ r.meta.valorMeta | currency: 'BRL' }}</p>
+            </div>
+            <span
+              class="badge"
+              [class.badge--sucesso]="r.situacao === 'concluida'"
+              [class.badge--perigo]="r.situacao === 'vencida'"
+              [class.badge--neutro]="r.situacao === 'andamento'"
+            >
+              {{ rotuloSituacao[r.situacao] }}
+            </span>
+          </div>
+
+          <div class="goal__progress">
+            <div
+              class="progress"
+              role="progressbar"
+              aria-label="Progresso da meta"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-valuenow]="r.percentual | number: '1.0-0'"
+            >
+              <span
+                class="progress__bar"
+                [class.progress__bar--completa]="r.situacao === 'concluida'"
+                [style.width.%]="r.percentual"
+              ></span>
+            </div>
+            <div class="goal__numbers">
+              <span>
+                <strong class="num">{{ r.meta.valorAtual | currency: 'BRL' }}</strong> guardados
+              </span>
+              <span class="num text-secondary">{{ r.percentual | number: '1.0-0' }}%</span>
+            </div>
+          </div>
+
+          <dl class="goal__details">
+            <div>
+              <dt>Prazo</dt>
+              <dd class="num">{{ r.meta.dataMeta | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+            <div>
+              <dt>Falta guardar</dt>
+              <dd class="num">{{ r.restante | currency: 'BRL' }}</dd>
+            </div>
+          </dl>
+
+          <footer class="goal__footer">
+            <span class="goal__deadline" [class.negative]="r.situacao === 'vencida'">
+              {{ r.prazo }}
+            </span>
+            <div class="list__actions">
+              <button
+                type="button"
+                class="icon-btn"
+                title="Editar"
+                aria-label="Editar meta"
+                (click)="editar(r.meta)"
+              >
+                <app-icon nome="editar" />
+              </button>
+              <button
+                type="button"
+                class="icon-btn icon-btn--danger"
+                title="Excluir"
+                aria-label="Excluir meta"
+                (click)="excluir(r.meta)"
+              >
+                <app-icon nome="excluir" />
+              </button>
+            </div>
+          </footer>
+        </article>
+      }
+    </div>
+  }
+</div>
+
+<app-dialog
+  [aberto]="emEdicao() !== undefined"
+  [titulo]="tituloFormulario()"
+  [largura]="520"
+  (fechado)="fecharFormulario()"
+>
+  @if (emEdicao() !== undefined) {
+    <app-meta-form
+      [meta]="emEdicao() ?? null"
+      [contas]="contas()"
+      (salvo)="aoSalvar()"
+      (cancelado)="fecharFormulario()"
+    />
+  }
+</app-dialog>
