@@ -16,9 +16,9 @@ namespace CMWallet.API.Controllers.Categoria
         }
 
         [HttpPost]
-        public async Task<IActionResult> CriarCategoria([FromBody] CategoriaCriarDto dto)
+        public async Task<IActionResult> CriarCategoria([FromBody] CategoriaCriarDto dto, CancellationToken cancellationToken)
         {
-            var categoriaId = await _service.CriarCategoriaAsync(dto);
+            var categoriaId = await _service.CriarCategoriaAsync(dto, cancellationToken);
             return CreatedAtAction(
                 nameof(BuscarCategoriaPorId),
                 new { categoriaId },
@@ -26,28 +26,28 @@ namespace CMWallet.API.Controllers.Categoria
         }
 
         [HttpGet("{categoriaId:int}")]
-        public async Task<ActionResult<CategoriaResponseDto>> BuscarCategoriaPorId(int categoriaId)
+        public async Task<ActionResult<CategoriaResponseDto>> BuscarCategoriaPorId(int categoriaId, CancellationToken cancellationToken)
         {
-            return Ok(await _service.BuscarCategoriaPorIdAsync(categoriaId));
+            return Ok(await _service.BuscarCategoriaPorIdAsync(categoriaId, cancellationToken));
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<CategoriaResponseDto>>> ListarCategorias()
+        public async Task<ActionResult<List<CategoriaResponseDto>>> ListarCategorias(CancellationToken cancellationToken)
         {
-            return Ok(await _service.BuscarTodasCategoriasAsync());
+            return Ok(await _service.BuscarTodasCategoriasAsync(cancellationToken));
         }
 
         [HttpPut("{categoriaId:int}")]
-        public async Task<IActionResult> AtualizarCategoria(int categoriaId, [FromBody] CategoriaAtualizarDto dto)
+        public async Task<IActionResult> AtualizarCategoria(int categoriaId, [FromBody] CategoriaAtualizarDto dto, CancellationToken cancellationToken)
         {
-            await _service.AtualizarCategoriaAsync(categoriaId, dto);
+            await _service.AtualizarCategoriaAsync(categoriaId, dto, cancellationToken);
             return NoContent();
         }
 
         [HttpDelete("{categoriaId:int}")]
-        public async Task<IActionResult> DeletarCategoria(int categoriaId)
+        public async Task<IActionResult> DeletarCategoria(int categoriaId, CancellationToken cancellationToken)
         {
-            await _service.ApagarCategoriaAsync(categoriaId);
+            await _service.ApagarCategoriaAsync(categoriaId, cancellationToken);
             return NoContent();
         }
     }

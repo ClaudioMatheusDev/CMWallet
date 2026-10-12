@@ -7,7 +7,7 @@ namespace CMWallet.Application.Dtos
     {
         [Required(ErrorMessage = "O nome da conta é obrigatório.")]
         [StringLength(200)]
-        public required string Nome { get; set; }
+        public string Nome { get; set; } = string.Empty;
 
         public decimal SaldoInicial { get; set; }
 

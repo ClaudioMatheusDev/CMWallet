@@ -1,7 +1,7 @@
 <div class="page">
   <app-page-header
     titulo="Contas"
-    descricao="Onde o seu dinheiro está guardado e com qual saldo cada conta começou."
+    descricao="Onde o seu dinheiro está guardado. O saldo atual considera apenas lançamentos pagos."
   >
     <button type="button" class="btn btn--primary" (click)="novaConta()">
       <app-icon nome="plus" />
@@ -42,6 +42,7 @@
               <th scope="col">Tipo</th>
               <th scope="col">Cadastrada em</th>
               <th scope="col" class="table__num">Saldo inicial</th>
+              <th scope="col" class="table__num">Saldo atual</th>
               <th scope="col"><span class="visually-hidden">Ações</span></th>
             </tr>
           </thead>
@@ -57,8 +58,11 @@
                     —
                   }
                 </td>
-                <td class="table__num nowrap" [class.negative]="c.saldoInicial < 0">
+                <td class="table__num nowrap text-secondary">
                   {{ c.saldoInicial | currency: 'BRL' }}
+                </td>
+                <td class="table__num nowrap table__primary" [class.negative]="c.saldoAtual < 0">
+                  {{ c.saldoAtual | currency: 'BRL' }}
                 </td>
                 <td class="table__actions">
                   <button
@@ -87,6 +91,9 @@
             <tr>
               <th scope="row" colspan="3">Total</th>
               <td class="table__num nowrap">{{ saldoInicialTotal() | currency: 'BRL' }}</td>
+              <td class="table__num nowrap" [class.negative]="saldoAtualTotal() < 0">
+                {{ saldoAtualTotal() | currency: 'BRL' }}
+              </td>
               <td></td>
             </tr>
           </tfoot>

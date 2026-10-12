@@ -43,33 +43,41 @@
       } @else {
         <section class="kpi-grid" aria-label="Indicadores do mês">
           <div class="kpi">
-            <span class="kpi__label">Entradas</span>
-            <span class="kpi__value num">{{ totalEntradas() | currency: 'BRL' }}</span>
-            <span class="kpi__meta">{{ lancamentos(qtdEntradas()) }} no mês</span>
-          </div>
-          <div class="kpi">
-            <span class="kpi__label">Saídas</span>
-            <span class="kpi__value num">{{ totalSaidas() | currency: 'BRL' }}</span>
-            <span class="kpi__meta">{{ lancamentos(qtdSaidas()) }} no mês</span>
-          </div>
-          <div class="kpi">
-            <span class="kpi__label">Resultado</span>
-            <span
-              class="kpi__value num"
-              [class.positive]="resultado() > 0"
-              [class.negative]="resultado() < 0"
-            >
-              {{ resultado() | currency: 'BRL' }}
+            <span class="kpi__label">Saldo em contas</span>
+            <span class="kpi__value num" [class.negative]="saldoTotal() < 0">
+              {{ saldoTotal() | currency: 'BRL' }}
             </span>
-            <span class="kpi__meta">Entradas menos saídas</span>
+            <span class="kpi__meta">Considera apenas lançamentos pagos</span>
           </div>
-          <div class="kpi">
-            <span class="kpi__label">A pagar</span>
-            <span class="kpi__value num">{{ totalPendente() | currency: 'BRL' }}</span>
-            <span class="kpi__meta">
-              {{ lancamentos(qtdPendentes()) }} {{ qtdPendentes() === 1 ? 'pendente' : 'pendentes' }}
-            </span>
-          </div>
+          @if (resumo(); as r) {
+            <div class="kpi">
+              <span class="kpi__label">Entradas no mês</span>
+              <span class="kpi__value num">{{ r.totalEntradas | currency: 'BRL' }}</span>
+              <span class="kpi__meta">{{ lancamentos(r.quantidadeEntradas) }}</span>
+            </div>
+            <div class="kpi">
+              <span class="kpi__label">Saídas no mês</span>
+              <span class="kpi__value num">{{ r.totalSaidas | currency: 'BRL' }}</span>
+              <span class="kpi__meta">
+                @if (r.quantidadeSaidasPendentes) {
+                  {{ r.saidasPendentes | currency: 'BRL' }} ainda a pagar
+                } @else {
+                  {{ lancamentos(r.quantidadeSaidas) }}, todos pagos
+                }
+              </span>
+            </div>
+            <div class="kpi">
+              <span class="kpi__label">Resultado do mês</span>
+              <span
+                class="kpi__value num"
+                [class.positive]="r.resultado > 0"
+                [class.negative]="r.resultado < 0"
+              >
+                {{ r.resultado | currency: 'BRL' }}
+              </span>
+              <span class="kpi__meta">Entradas menos saídas</span>
+            </div>
+          }
         </section>
 
         <div class="dashboard-grid">
@@ -118,11 +126,11 @@
             </header>
             @if (gastosPorCategoria().length) {
               <ul class="breakdown">
-                @for (g of gastosPorCategoria(); track g.nome) {
+                @for (g of gastosPorCategoria(); track g.categoriaId) {
                   <li class="breakdown__item">
                     <div class="breakdown__row">
                       <span class="breakdown__label">{{ g.nome }}</span>
-                      <span class="num">{{ g.valor | currency: 'BRL' }}</span>
+                      <span class="num">{{ g.total | currency: 'BRL' }}</span>
                     </div>
                     <div class="breakdown__track">
                       <span class="breakdown__bar" [style.width.%]="g.percentual"></span>
@@ -185,13 +193,15 @@
                     <span class="list__title">{{ c.nome }}</span>
                     <span class="list__meta">{{ rotuloTipoConta(c.tipoConta) }}</span>
                   </div>
-                  <span class="list__value num">{{ c.saldoInicial | currency: 'BRL' }}</span>
+                  <span class="list__value num" [class.negative]="c.saldoAtual < 0">
+                    {{ c.saldoAtual | currency: 'BRL' }}
+                  </span>
                 </li>
               }
             </ul>
             <footer class="card__footer">
-              <span>Saldo inicial total</span>
-              <strong class="num">{{ saldoInicialTotal() | currency: 'BRL' }}</strong>
+              <span>Saldo total</span>
+              <strong class="num">{{ saldoTotal() | currency: 'BRL' }}</strong>
             </footer>
           </section>
         </div>

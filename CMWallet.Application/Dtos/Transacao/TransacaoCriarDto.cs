@@ -12,8 +12,8 @@ namespace CMWallet.Application.Dtos
         [Range(typeof(decimal), "0.01", "9999999999999999", ParseLimitsInInvariantCulture = true, ErrorMessage = "O valor da transação deve ser maior que zero.")]
         public decimal Valor { get; set; }
 
-        /// <summary>Data da transação. Quando omitida, assume o momento atual (UTC).</summary>
-        public DateTime? Data { get; set; }
+        /// <summary>Data da transação. Quando omitida, assume a data atual.</summary>
+        public DateOnly? Data { get; set; }
 
         [EnumDataType(typeof(Tipo), ErrorMessage = "Tipo inválido.")]
         public Tipo Tipo { get; set; }

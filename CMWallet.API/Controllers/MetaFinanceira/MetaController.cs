@@ -16,35 +16,35 @@ namespace CMWallet.API.Controllers.MetaFinanceira
         }
 
         [HttpPost]
-        public async Task<IActionResult> CriarMeta([FromBody] MetaCriarDto dto)
+        public async Task<IActionResult> CriarMeta([FromBody] MetaCriarDto dto, CancellationToken cancellationToken)
         {
-            var metaId = await _service.CriarMetaAsync(dto);
+            var metaId = await _service.CriarMetaAsync(dto, cancellationToken);
             return CreatedAtAction(nameof(BuscarMetaPorId), new { metaId }, new { MetaId = metaId });
         }
 
         [HttpGet("{metaId:int}")]
-        public async Task<ActionResult<MetaResponseDto>> BuscarMetaPorId(int metaId)
+        public async Task<ActionResult<MetaResponseDto>> BuscarMetaPorId(int metaId, CancellationToken cancellationToken)
         {
-            return Ok(await _service.BuscarMetaPorIdAsync(metaId));
+            return Ok(await _service.BuscarMetaPorIdAsync(metaId, cancellationToken));
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<MetaResponseDto>>> ListarMetas()
+        public async Task<ActionResult<List<MetaResponseDto>>> ListarMetas(CancellationToken cancellationToken)
         {
-            return Ok(await _service.ListarMetasAsync());
+            return Ok(await _service.ListarMetasAsync(cancellationToken));
         }
 
         [HttpPut("{metaId:int}")]
-        public async Task<IActionResult> AtualizarMeta(int metaId, [FromBody] MetaAtualizarDto dto)
+        public async Task<IActionResult> AtualizarMeta(int metaId, [FromBody] MetaAtualizarDto dto, CancellationToken cancellationToken)
         {
-            await _service.AtualizarMetaAsync(metaId, dto);
+            await _service.AtualizarMetaAsync(metaId, dto, cancellationToken);
             return NoContent();
         }
 
         [HttpDelete("{metaId:int}")]
-        public async Task<IActionResult> DeletarMeta(int metaId)
+        public async Task<IActionResult> DeletarMeta(int metaId, CancellationToken cancellationToken)
         {
-            await _service.ApagarMetaAsync(metaId);
+            await _service.ApagarMetaAsync(metaId, cancellationToken);
             return NoContent();
         }
     }

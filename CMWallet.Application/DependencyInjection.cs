@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<ICategoriaService, CategoriaService>();
         services.AddScoped<ITransacaoService, TransacaoService>();
         services.AddScoped<IMetaService, MetaService>();
+        services.AddScoped<IResumoService, ResumoService>();
 
         return services;
     }

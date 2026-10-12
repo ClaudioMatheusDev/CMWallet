@@ -1,9 +1,10 @@
 namespace CMWallet.Application.Exceptions;
 
-public class RegistroNaoEncontradoException : BusinessException
+/// <summary>Registro inexistente. Respondido como HTTP 404.</summary>
+public abstract class RegistroNaoEncontradoException : BusinessException
 {
-    public RegistroNaoEncontradoException(string nomeRegistro)
-        : base($"{nomeRegistro} não encontrado.")
+    protected RegistroNaoEncontradoException(string message)
+        : base(message)
     {
     }
 }

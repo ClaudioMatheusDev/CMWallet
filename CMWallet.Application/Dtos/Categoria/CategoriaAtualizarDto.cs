@@ -7,7 +7,7 @@ namespace CMWallet.Application.Dtos
     {
         [Required(ErrorMessage = "O nome da categoria é obrigatório.")]
         [StringLength(200)]
-        public required string Nome { get; set; }
+        public string Nome { get; set; } = string.Empty;
 
         [EnumDataType(typeof(Tipo), ErrorMessage = "Tipo inválido.")]
         public Tipo Tipo { get; set; }

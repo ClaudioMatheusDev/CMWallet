@@ -16,10 +16,5 @@ public class CategoriaConfiguration : IEntityTypeConfiguration<Categoria>
 
         entity.Property(c => c.Tipo)
             .IsRequired();
-
-        entity.HasMany(c => c.Transacoes)
-            .WithOne(t => t.Categoria)
-            .HasForeignKey(t => t.CategoriaId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }
