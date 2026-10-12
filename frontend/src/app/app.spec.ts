@@ -1,36 +1,25 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
-
 import { App } from './app';
-import { routes } from './app.routes';
-import { ContaService } from './services/conta.service';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [
-        provideRouter(routes),
-        {
-          provide: ContaService,
-          useValue: { listarContas: () => of([]) },
-        },
-      ],
-    })
-      .compileComponents();
+      providers: [provideRouter([])],
+    }).compileComponents();
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it('should render the application title', async () => {
+  it('renderiza a marca e a navegação principal', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('CMWallet');
+    const elemento = fixture.nativeElement as HTMLElement;
+
+    expect(elemento.querySelector('.sidebar .brand__name')?.textContent).toContain('CMWallet');
+
+    const rotulos = Array.from(elemento.querySelectorAll('.nav__link')).map((link) =>
+      link.textContent?.trim(),
+    );
+    expect(rotulos).toEqual(['Visão geral', 'Transações', 'Metas', 'Contas', 'Categorias']);
   });
 });

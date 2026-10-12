@@ -1,0 +1,111 @@
+<div class="page">
+  <app-page-header
+    titulo="Contas"
+    descricao="Onde o seu dinheiro está guardado e com qual saldo cada conta começou."
+  >
+    <button type="button" class="btn btn--primary" (click)="novaConta()">
+      <app-icon nome="plus" />
+      Nova conta
+    </button>
+  </app-page-header>
+
+  <section class="card">
+    @if (erro(); as mensagem) {
+      <div class="card__body">
+        <div class="alert alert--erro" role="alert">
+          <app-icon nome="alerta" [tamanho]="18" />
+          <p class="alert__text">{{ mensagem }}</p>
+          <button type="button" class="btn btn--secondary btn--sm" (click)="carregar()">
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    } @else if (carregando() && contas().length === 0) {
+      <app-skeleton-list [quantidade]="3" />
+    } @else if (contas().length === 0) {
+      <app-empty-state
+        icone="contas"
+        titulo="Nenhuma conta cadastrada"
+        descricao="Cadastre suas contas bancárias, poupanças ou dinheiro em espécie para registrar transações."
+      >
+        <button type="button" class="btn btn--primary" (click)="novaConta()">
+          <app-icon nome="plus" />
+          Nova conta
+        </button>
+      </app-empty-state>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Conta</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Cadastrada em</th>
+              <th scope="col" class="table__num">Saldo inicial</th>
+              <th scope="col"><span class="visually-hidden">Ações</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of contas(); track c.contaId) {
+              <tr>
+                <td class="table__primary">{{ c.nome }}</td>
+                <td>{{ rotuloTipoConta(c.tipoConta) }}</td>
+                <td class="text-secondary nowrap num">
+                  @if (criadaEm(c); as data) {
+                    {{ data | date: 'dd/MM/yyyy' }}
+                  } @else {
+                    —
+                  }
+                </td>
+                <td class="table__num nowrap" [class.negative]="c.saldoInicial < 0">
+                  {{ c.saldoInicial | currency: 'BRL' }}
+                </td>
+                <td class="table__actions">
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    title="Editar"
+                    [attr.aria-label]="'Editar ' + c.nome"
+                    (click)="editar(c)"
+                  >
+                    <app-icon nome="editar" />
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    title="Excluir"
+                    [attr.aria-label]="'Excluir ' + c.nome"
+                    (click)="excluir(c)"
+                  >
+                    <app-icon nome="excluir" />
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colspan="3">Total</th>
+              <td class="table__num nowrap">{{ saldoInicialTotal() | currency: 'BRL' }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    }
+  </section>
+</div>
+
+<app-dialog
+  [aberto]="emEdicao() !== undefined"
+  [titulo]="tituloFormulario()"
+  (fechado)="fecharFormulario()"
+>
+  @if (emEdicao() !== undefined) {
+    <app-conta-form
+      [conta]="emEdicao() ?? null"
+      (salvo)="aoSalvar()"
+      (cancelado)="fecharFormulario()"
+    />
+  }
+</app-dialog>

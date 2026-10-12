@@ -1,0 +1,227 @@
+<div class="page">
+  <app-page-header titulo="Transações" descricao="Entradas e saídas registradas em todas as contas.">
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="faltamCadastros()"
+      (click)="novaTransacao()"
+    >
+      <app-icon nome="plus" />
+      Nova transação
+    </button>
+  </app-page-header>
+
+  @if (faltamCadastros()) {
+    <div class="alert alert--info">
+      <app-icon nome="alerta" [tamanho]="18" />
+      <p class="alert__text">
+        Para registrar transações, cadastre ao menos uma <a routerLink="/contas">conta</a> e uma
+        <a routerLink="/categorias">categoria</a>.
+      </p>
+    </div>
+  }
+
+  <section class="card">
+    <form class="toolbar" [formGroup]="filtros" role="search" aria-label="Filtrar transações">
+      <div class="field">
+        <label class="field__label" for="filtro-conta">Conta</label>
+        <select id="filtro-conta" class="select select--sm" formControlName="contaId">
+          <option [ngValue]="null">Todas</option>
+          @for (c of contas(); track c.contaId) {
+            <option [ngValue]="c.contaId">{{ c.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filtro-categoria">Categoria</label>
+        <select id="filtro-categoria" class="select select--sm" formControlName="categoriaId">
+          <option [ngValue]="null">Todas</option>
+          @if (categoriasDeEntrada().length) {
+            <optgroup label="Entradas">
+              @for (c of categoriasDeEntrada(); track c.categoriaId) {
+                <option [ngValue]="c.categoriaId">{{ c.nome }}</option>
+              }
+            </optgroup>
+          }
+          @if (categoriasDeSaida().length) {
+            <optgroup label="Saídas">
+              @for (c of categoriasDeSaida(); track c.categoriaId) {
+                <option [ngValue]="c.categoriaId">{{ c.nome }}</option>
+              }
+            </optgroup>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filtro-tipo">Tipo</label>
+        <select id="filtro-tipo" class="select select--sm" formControlName="tipo">
+          <option [ngValue]="null">Todos</option>
+          <option [ngValue]="TipoMovimento.Entrada">Entradas</option>
+          <option [ngValue]="TipoMovimento.Saida">Saídas</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filtro-inicio">De</label>
+        <input id="filtro-inicio" class="input input--sm" type="date" formControlName="dataInicio" />
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filtro-fim">Até</label>
+        <input id="filtro-fim" class="input input--sm" type="date" formControlName="dataFim" />
+      </div>
+
+      @if (filtrosAtivos()) {
+        <button type="button" class="btn btn--ghost btn--sm toolbar__end" (click)="limparFiltros()">
+          Limpar filtros
+        </button>
+      }
+    </form>
+
+    @if (erro(); as mensagem) {
+      <div class="card__body">
+        <div class="alert alert--erro" role="alert">
+          <app-icon nome="alerta" [tamanho]="18" />
+          <p class="alert__text">{{ mensagem }}</p>
+          <button type="button" class="btn btn--secondary btn--sm" (click)="recarregar()">
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    } @else if (!resultado()) {
+      <app-skeleton-list [quantidade]="6" />
+    } @else if (itens().length === 0) {
+      @if (filtrosAtivos()) {
+        <app-empty-state
+          icone="transacoes"
+          titulo="Nenhuma transação encontrada"
+          descricao="Nenhum lançamento corresponde aos filtros aplicados."
+        >
+          <button type="button" class="btn btn--secondary" (click)="limparFiltros()">
+            Limpar filtros
+          </button>
+        </app-empty-state>
+      } @else {
+        <app-empty-state
+          icone="transacoes"
+          titulo="Nenhuma transação registrada"
+          descricao="Registre entradas e saídas para acompanhar para onde vai o seu dinheiro."
+        >
+          @if (!faltamCadastros()) {
+            <button type="button" class="btn btn--primary" (click)="novaTransacao()">
+              <app-icon nome="plus" />
+              Nova transação
+            </button>
+          }
+        </app-empty-state>
+      }
+    } @else {
+      <div class="table-wrap" [class.table-wrap--carregando]="carregando()">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Descrição</th>
+              <th scope="col">Categoria</th>
+              <th scope="col">Conta</th>
+              <th scope="col">Situação</th>
+              <th scope="col" class="table__num">Valor</th>
+              <th scope="col"><span class="visually-hidden">Ações</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of itens(); track t.transacaoId) {
+              <tr>
+                <td class="nowrap text-secondary num">{{ t.data | date: 'dd/MM/yyyy' }}</td>
+                <td class="table__primary">{{ t.descricao }}</td>
+                <td>{{ t.categoriaNome }}</td>
+                <td class="text-secondary">{{ t.contaNome }}</td>
+                <td>
+                  @if (t.pago) {
+                    <span class="badge badge--sucesso">
+                      {{ t.tipo === TipoMovimento.Entrada ? 'Recebido' : 'Pago' }}
+                    </span>
+                  } @else {
+                    <span class="badge badge--aviso">Pendente</span>
+                  }
+                </td>
+                <td
+                  class="table__num nowrap"
+                  [class.positive]="t.tipo === TipoMovimento.Entrada"
+                >
+                  {{ t.tipo === TipoMovimento.Entrada ? '+' : '−' }} {{ t.valor | currency: 'BRL' }}
+                </td>
+                <td class="table__actions">
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    title="Editar"
+                    [attr.aria-label]="'Editar ' + t.descricao"
+                    (click)="editar(t)"
+                  >
+                    <app-icon nome="editar" />
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    title="Excluir"
+                    [attr.aria-label]="'Excluir ' + t.descricao"
+                    (click)="excluir(t)"
+                  >
+                    <app-icon nome="excluir" />
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pager">
+        @if (intervalo(); as i) {
+          <span class="pager__info num">Exibindo {{ i.inicio }}–{{ i.fim }} de {{ total() }}</span>
+        }
+        <div class="pager__controls">
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            [disabled]="pagina() <= 1 || carregando()"
+            (click)="irParaPagina(pagina() - 1)"
+          >
+            <app-icon nome="anterior" />
+            Anterior
+          </button>
+          <span class="pager__page num">{{ pagina() }} / {{ totalPaginas() }}</span>
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            [disabled]="pagina() >= totalPaginas() || carregando()"
+            (click)="irParaPagina(pagina() + 1)"
+          >
+            Próxima
+            <app-icon nome="proximo" />
+          </button>
+        </div>
+      </footer>
+    }
+  </section>
+</div>
+
+<app-dialog
+  [aberto]="emEdicao() !== undefined"
+  [titulo]="tituloFormulario()"
+  [largura]="560"
+  (fechado)="fecharFormulario()"
+>
+  @if (emEdicao() !== undefined) {
+    <app-transacao-form
+      [transacao]="emEdicao() ?? null"
+      [contas]="contas()"
+      [categorias]="categorias()"
+      (salvo)="aoSalvar()"
+      (cancelado)="fecharFormulario()"
+    />
+  }
+</app-dialog>
