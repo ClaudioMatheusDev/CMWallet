@@ -13,6 +13,8 @@ export interface Conta {
   contaId: number;
   nome: string;
   saldoInicial: number;
+  /** Saldo inicial + entradas pagas − saídas pagas, calculado pela API. */
+  saldoAtual: number;
   tipoConta: TipoConta;
   dataCriacao: string;
   dataAtualizacao: string;
@@ -70,9 +72,6 @@ export interface FiltroTransacoes {
   tamanhoPagina: number;
 }
 
-/** Limite definido pela API (`TransacaoFiltroDto.TamanhoPaginaMaximo`). */
-export const TAMANHO_PAGINA_MAXIMO = 100;
-
 export interface Pagina<T> {
   itens: T[];
   pagina: number;
@@ -87,6 +86,38 @@ export interface Meta {
   valorAtual: number;
   dataMeta: string;
   contaId: number;
+}
+
+/** Datas no formato `yyyy-MM-dd`, ambas inclusivas. Sem datas, a API usa o mês corrente. */
+export interface FiltroResumo {
+  dataInicio?: string;
+  dataFim?: string;
+  contaId?: number;
+}
+
+export interface Resumo {
+  dataInicio: string;
+  dataFim: string;
+  totalEntradas: number;
+  totalSaidas: number;
+  resultado: number;
+  quantidadeEntradas: number;
+  quantidadeSaidas: number;
+  entradasPendentes: number;
+  quantidadeEntradasPendentes: number;
+  saidasPendentes: number;
+  quantidadeSaidasPendentes: number;
+  categorias: ResumoCategoria[];
+}
+
+export interface ResumoCategoria {
+  categoriaId: number;
+  nome: string;
+  tipo: TipoMovimento;
+  total: number;
+  quantidade: number;
+  /** Participação no total do mesmo tipo, de 0 a 100. */
+  percentual: number;
 }
 
 export interface MetaInput {

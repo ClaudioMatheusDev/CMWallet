@@ -32,6 +32,7 @@ export class ContasPage {
   protected readonly saldoInicialTotal = computed(() =>
     soma(this.contas().map((c) => c.saldoInicial)),
   );
+  protected readonly saldoAtualTotal = computed(() => soma(this.contas().map((c) => c.saldoAtual)));
 
   /** `undefined`: formulário fechado; `null`: nova conta. */
   protected readonly emEdicao = signal<Conta | null | undefined>(undefined);
@@ -85,7 +86,7 @@ export class ContasPage {
   protected async excluir(conta: Conta): Promise<void> {
     const confirmado = await this.confirmacao.confirmar({
       titulo: 'Excluir conta',
-      mensagem: `A conta "${conta.nome}" será excluída junto com todas as transações e metas vinculadas a ela. Esta ação não pode ser desfeita.`,
+      mensagem: `A conta "${conta.nome}" será excluída permanentemente. Contas com transações ou metas vinculadas não podem ser excluídas.`,
       confirmar: 'Excluir conta',
       destrutiva: true,
     });

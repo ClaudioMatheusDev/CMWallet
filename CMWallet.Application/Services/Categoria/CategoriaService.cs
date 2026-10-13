@@ -14,7 +14,7 @@ namespace CMWallet.Application.Services
             _categoriaRepository = categoriaRepository;
         }
 
-        public async Task<int> CriarCategoriaAsync(CategoriaCriarDto dto)
+        public async Task<int> CriarCategoriaAsync(CategoriaCriarDto dto, CancellationToken cancellationToken = default)
         {
             var categoria = new Categoria
             {
@@ -22,47 +22,64 @@ namespace CMWallet.Application.Services
                 Tipo = dto.Tipo
             };
 
-            await _categoriaRepository.AdicionarCategoriaAsync(categoria);
-            await _categoriaRepository.SalvarAlteracoesAsync();
+            await _categoriaRepository.AdicionarCategoriaAsync(categoria, cancellationToken);
+            await _categoriaRepository.SalvarAlteracoesAsync(cancellationToken);
 
             return categoria.CategoriaId;
         }
 
-        public async Task<CategoriaResponseDto> BuscarCategoriaPorIdAsync(int categoriaId)
+        public async Task<CategoriaResponseDto> BuscarCategoriaPorIdAsync(int categoriaId, CancellationToken cancellationToken = default)
         {
-            var categoria = await ObterCategoriaAsync(categoriaId);
+            var categoria = await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId, cancellationToken)
+                ?? throw new CategoriaNaoEncontradaException(categoriaId);
 
             return ParaDto(categoria);
         }
 
-        public async Task<List<CategoriaResponseDto>> BuscarTodasCategoriasAsync()
+        public async Task<List<CategoriaResponseDto>> BuscarTodasCategoriasAsync(CancellationToken cancellationToken = default)
         {
-            var categorias = await _categoriaRepository.ListarTodasCategorias();
-
+            var categorias = await _categoriaRepository.ListarTodasCategoriasAsync(cancellationToken);
             return categorias.Select(ParaDto).ToList();
         }
 
-        public async Task ApagarCategoriaAsync(int categoriaId)
+        public async Task ApagarCategoriaAsync(int categoriaId, CancellationToken cancellationToken = default)
         {
-            var categoria = await ObterCategoriaAsync(categoriaId);
+            var categoria = await ObterParaEdicaoAsync(categoriaId, cancellationToken);
+
+            var transacoes = await _categoriaRepository.ContarTransacoesAsync(categoriaId, cancellationToken);
+            if (transacoes > 0)
+            {
+                throw new ConflitoNegocioException(
+                    $"A categoria \"{categoria.Nome}\" é usada em " +
+                    $"{Texto.Quantidade(transacoes, "transação", "transações")}. " +
+                    "Altere a categoria desses lançamentos antes de excluí-la.");
+            }
 
             _categoriaRepository.DeletarCategoria(categoria);
-            await _categoriaRepository.SalvarAlteracoesAsync();
+            await _categoriaRepository.SalvarAlteracoesAsync(cancellationToken);
         }
 
-        public async Task AtualizarCategoriaAsync(int categoriaId, CategoriaAtualizarDto dto)
+        public async Task AtualizarCategoriaAsync(int categoriaId, CategoriaAtualizarDto dto, CancellationToken cancellationToken = default)
         {
-            var categoria = await ObterCategoriaAsync(categoriaId);
+            var categoria = await ObterParaEdicaoAsync(categoriaId, cancellationToken);
+
+            // Mudar o tipo deixaria as transações já lançadas com tipo diferente da categoria.
+            if (categoria.Tipo != dto.Tipo
+                && await _categoriaRepository.ContarTransacoesAsync(categoriaId, cancellationToken) > 0)
+            {
+                throw new ConflitoNegocioException(
+                    $"A categoria \"{categoria.Nome}\" já possui transações; o tipo dela não pode ser alterado.");
+            }
 
             categoria.Nome = dto.Nome.Trim();
             categoria.Tipo = dto.Tipo;
 
-            await _categoriaRepository.SalvarAlteracoesAsync();
+            await _categoriaRepository.SalvarAlteracoesAsync(cancellationToken);
         }
 
-        private async Task<Categoria> ObterCategoriaAsync(int categoriaId)
+        private async Task<Categoria> ObterParaEdicaoAsync(int categoriaId, CancellationToken cancellationToken)
         {
-            return await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId)
+            return await _categoriaRepository.BuscarCategoriaParaEdicaoAsync(categoriaId, cancellationToken)
                 ?? throw new CategoriaNaoEncontradaException(categoriaId);
         }
 

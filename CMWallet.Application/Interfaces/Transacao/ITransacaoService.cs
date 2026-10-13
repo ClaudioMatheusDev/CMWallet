@@ -4,10 +4,10 @@ namespace CMWallet.Application.Interfaces
 {
     public interface ITransacaoService
     {
-        Task<int> CriarTransacaoAsync(TransacaoCriarDto dto);
-        Task<TransacaoResponseDto> BuscarTransacaoPorIdAsync(int transacaoId);
-        Task<PagedResult<TransacaoResponseDto>> ListarTransacoesAsync(TransacaoFiltroDto filtro);
-        Task ApagarTransacaoAsync(int transacaoId);
-        Task AtualizarTransacaoAsync(int transacaoId, TransacaoAtualizarDto dto);
+        Task<int> CriarTransacaoAsync(TransacaoCriarDto dto, CancellationToken cancellationToken = default);
+        Task<TransacaoResponseDto> BuscarTransacaoPorIdAsync(int transacaoId, CancellationToken cancellationToken = default);
+        Task<PagedResult<TransacaoResponseDto>> ListarTransacoesAsync(TransacaoFiltroDto filtro, CancellationToken cancellationToken = default);
+        Task ApagarTransacaoAsync(int transacaoId, CancellationToken cancellationToken = default);
+        Task AtualizarTransacaoAsync(int transacaoId, TransacaoAtualizarDto dto, CancellationToken cancellationToken = default);
     }
 }

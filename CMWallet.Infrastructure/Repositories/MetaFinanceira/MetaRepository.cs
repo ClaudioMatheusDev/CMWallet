@@ -14,19 +14,29 @@ namespace CMWallet.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task AdicionarMetaAsync(MetaFinanceira meta)
+        public async Task AdicionarMetaAsync(MetaFinanceira meta, CancellationToken cancellationToken = default)
         {
-            await _context.MetasFinanceiras.AddAsync(meta);
+            await _context.MetasFinanceiras.AddAsync(meta, cancellationToken);
         }
 
-        public async Task<MetaFinanceira?> BuscarMetaPorIdAsync(int metaId)
+        public async Task<MetaFinanceira?> BuscarMetaParaEdicaoAsync(int metaId, CancellationToken cancellationToken = default)
         {
-            return await _context.MetasFinanceiras.FirstOrDefaultAsync(m => m.MetaId == metaId);
+            return await _context.MetasFinanceiras.FirstOrDefaultAsync(m => m.MetaId == metaId, cancellationToken);
         }
 
-        public async Task<List<MetaFinanceira>> ListarTodasMetas()
+        public async Task<MetaFinanceira?> BuscarMetaPorIdAsync(int metaId, CancellationToken cancellationToken = default)
         {
-            return await _context.MetasFinanceiras.AsNoTracking().OrderBy(m => m.DataMeta).ToListAsync();
+            return await _context.MetasFinanceiras
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.MetaId == metaId, cancellationToken);
+        }
+
+        public async Task<List<MetaFinanceira>> ListarTodasMetasAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.MetasFinanceiras
+                .AsNoTracking()
+                .OrderBy(m => m.DataMeta)
+                .ToListAsync(cancellationToken);
         }
 
         public void DeletarMeta(MetaFinanceira meta)
@@ -34,9 +44,9 @@ namespace CMWallet.Infrastructure.Repositories
             _context.MetasFinanceiras.Remove(meta);
         }
 
-        public async Task SalvarAlteracoesAsync()
+        public async Task SalvarAlteracoesAsync(CancellationToken cancellationToken = default)
         {
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

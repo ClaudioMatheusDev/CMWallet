@@ -16,9 +16,9 @@ namespace CMWallet.Application.Services
             _contaRepository = contaRepository;
         }
 
-        public async Task<int> CriarMetaAsync(MetaCriarDto dto)
+        public async Task<int> CriarMetaAsync(MetaCriarDto dto, CancellationToken cancellationToken = default)
         {
-            await GarantirContaExisteAsync(dto.ContaId);
+            await GarantirContaExisteAsync(dto.ContaId, cancellationToken);
 
             var meta = new MetaFinanceira
             {
@@ -28,41 +28,41 @@ namespace CMWallet.Application.Services
                 ContaId = dto.ContaId
             };
 
-            await _metaRepository.AdicionarMetaAsync(meta);
-            await _metaRepository.SalvarAlteracoesAsync();
+            await _metaRepository.AdicionarMetaAsync(meta, cancellationToken);
+            await _metaRepository.SalvarAlteracoesAsync(cancellationToken);
 
             return meta.MetaId;
         }
 
-        public async Task<MetaResponseDto> BuscarMetaPorIdAsync(int metaId)
+        public async Task<MetaResponseDto> BuscarMetaPorIdAsync(int metaId, CancellationToken cancellationToken = default)
         {
-            var meta = await ObterMetaAsync(metaId);
+            var meta = await _metaRepository.BuscarMetaPorIdAsync(metaId, cancellationToken)
+                ?? throw new MetaNaoEncontradaException(metaId);
 
             return ParaDto(meta);
         }
 
-        public async Task<List<MetaResponseDto>> ListarMetasAsync()
+        public async Task<List<MetaResponseDto>> ListarMetasAsync(CancellationToken cancellationToken = default)
         {
-            var metas = await _metaRepository.ListarTodasMetas();
-
+            var metas = await _metaRepository.ListarTodasMetasAsync(cancellationToken);
             return metas.Select(ParaDto).ToList();
         }
 
-        public async Task ApagarMetaAsync(int metaId)
+        public async Task ApagarMetaAsync(int metaId, CancellationToken cancellationToken = default)
         {
-            var meta = await ObterMetaAsync(metaId);
+            var meta = await ObterParaEdicaoAsync(metaId, cancellationToken);
 
             _metaRepository.DeletarMeta(meta);
-            await _metaRepository.SalvarAlteracoesAsync();
+            await _metaRepository.SalvarAlteracoesAsync(cancellationToken);
         }
 
-        public async Task AtualizarMetaAsync(int metaId, MetaAtualizarDto dto)
+        public async Task AtualizarMetaAsync(int metaId, MetaAtualizarDto dto, CancellationToken cancellationToken = default)
         {
-            var meta = await ObterMetaAsync(metaId);
+            var meta = await ObterParaEdicaoAsync(metaId, cancellationToken);
 
             if (meta.ContaId != dto.ContaId)
             {
-                await GarantirContaExisteAsync(dto.ContaId);
+                await GarantirContaExisteAsync(dto.ContaId, cancellationToken);
             }
 
             meta.ValorMeta = dto.ValorMeta;
@@ -70,18 +70,18 @@ namespace CMWallet.Application.Services
             meta.DataMeta = dto.DataMeta!.Value;
             meta.ContaId = dto.ContaId;
 
-            await _metaRepository.SalvarAlteracoesAsync();
+            await _metaRepository.SalvarAlteracoesAsync(cancellationToken);
         }
 
-        private async Task<MetaFinanceira> ObterMetaAsync(int metaId)
+        private async Task<MetaFinanceira> ObterParaEdicaoAsync(int metaId, CancellationToken cancellationToken)
         {
-            return await _metaRepository.BuscarMetaPorIdAsync(metaId)
+            return await _metaRepository.BuscarMetaParaEdicaoAsync(metaId, cancellationToken)
                 ?? throw new MetaNaoEncontradaException(metaId);
         }
 
-        private async Task GarantirContaExisteAsync(int contaId)
+        private async Task GarantirContaExisteAsync(int contaId, CancellationToken cancellationToken)
         {
-            if (await _contaRepository.BuscarContaPorIdAsync(contaId) is null)
+            if (!await _contaRepository.ExisteContaAsync(contaId, cancellationToken))
             {
                 throw new ContaNaoEncontradaException(contaId);
             }

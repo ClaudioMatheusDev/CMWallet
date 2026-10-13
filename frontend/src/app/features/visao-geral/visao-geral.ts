@@ -11,12 +11,12 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { forkJoin, map } from 'rxjs';
-import { intervaloDoMes } from '../../core/datas';
 import { mensagemDeErro } from '../../core/http-error';
-import { Conta, Meta, TipoMovimento, Transacao } from '../../core/models';
+import { Conta, Meta, Resumo, TipoMovimento, Transacao } from '../../core/models';
 import { rotuloTipoConta, soma } from '../../core/rotulos';
 import { ContasService } from '../../core/services/contas.service';
 import { MetasService } from '../../core/services/metas.service';
+import { ResumoService } from '../../core/services/resumo.service';
 import { TransacoesService } from '../../core/services/transacoes.service';
 import { EmptyState } from '../../shared/empty-state';
 import { Icon } from '../../shared/icon';
@@ -26,7 +26,7 @@ import { resumirMeta } from '../metas/resumo-meta';
 interface DadosPainel {
   contas: Conta[];
   metas: Meta[];
-  transacoesDoMes: Transacao[];
+  resumo: Resumo | null;
   recentes: Transacao[];
 }
 
@@ -41,6 +41,7 @@ const CATEGORIAS_EXIBIDAS = 6;
 export class VisaoGeral {
   private readonly contasService = inject(ContasService);
   private readonly metasService = inject(MetasService);
+  private readonly resumoService = inject(ResumoService);
   private readonly transacoesService = inject(TransacoesService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -52,48 +53,19 @@ export class VisaoGeral {
 
   protected readonly estado = signal<'carregando' | 'erro' | 'pronto'>('carregando');
   protected readonly erro = signal('');
-  private readonly dados = signal<DadosPainel>({
-    contas: [],
-    metas: [],
-    transacoesDoMes: [],
-    recentes: [],
-  });
+  private readonly dados = signal<DadosPainel>({ contas: [], metas: [], resumo: null, recentes: [] });
 
   protected readonly contas = computed(() => this.dados().contas);
   protected readonly recentes = computed(() => this.dados().recentes);
+  protected readonly resumo = computed(() => this.dados().resumo);
 
-  private readonly entradas = computed(() =>
-    this.dados().transacoesDoMes.filter((t) => t.tipo === TipoMovimento.Entrada),
+  protected readonly saldoTotal = computed(() => soma(this.contas().map((c) => c.saldoAtual)));
+
+  protected readonly gastosPorCategoria = computed(() =>
+    (this.resumo()?.categorias ?? [])
+      .filter((c) => c.tipo === TipoMovimento.Saida)
+      .slice(0, CATEGORIAS_EXIBIDAS),
   );
-  private readonly saidas = computed(() =>
-    this.dados().transacoesDoMes.filter((t) => t.tipo === TipoMovimento.Saida),
-  );
-
-  protected readonly qtdEntradas = computed(() => this.entradas().length);
-  protected readonly qtdSaidas = computed(() => this.saidas().length);
-  protected readonly totalEntradas = computed(() => soma(this.entradas().map((t) => t.valor)));
-  protected readonly totalSaidas = computed(() => soma(this.saidas().map((t) => t.valor)));
-  protected readonly resultado = computed(() => this.totalEntradas() - this.totalSaidas());
-
-  private readonly pendentes = computed(() => this.saidas().filter((t) => !t.pago));
-  protected readonly qtdPendentes = computed(() => this.pendentes().length);
-  protected readonly totalPendente = computed(() => soma(this.pendentes().map((t) => t.valor)));
-
-  protected readonly saldoInicialTotal = computed(() =>
-    soma(this.contas().map((c) => c.saldoInicial)),
-  );
-
-  protected readonly gastosPorCategoria = computed(() => {
-    const total = this.totalSaidas();
-    const porCategoria = new Map<string, number>();
-    for (const t of this.saidas()) {
-      porCategoria.set(t.categoriaNome, (porCategoria.get(t.categoriaNome) ?? 0) + t.valor);
-    }
-    return [...porCategoria]
-      .map(([nome, valor]) => ({ nome, valor, percentual: total > 0 ? (valor / total) * 100 : 0 }))
-      .sort((a, b) => b.valor - a.valor)
-      .slice(0, CATEGORIAS_EXIBIDAS);
-  });
 
   protected readonly metas = computed(() => {
     const nomes = new Map(this.contas().map((c) => [c.contaId, c.nome]));
@@ -110,15 +82,11 @@ export class VisaoGeral {
 
   protected carregar(): void {
     this.estado.set('carregando');
-    const mes = intervaloDoMes(this.hoje);
 
     forkJoin({
       contas: this.contasService.listar(),
       metas: this.metasService.listar(),
-      transacoesDoMes: this.transacoesService.listarTodas({
-        dataInicio: mes.inicio,
-        dataFim: mes.fim,
-      }),
+      resumo: this.resumoService.obter(),
       recentes: this.transacoesService
         .listar({ pagina: 1, tamanhoPagina: 6 })
         .pipe(map((pagina) => pagina.itens)),
