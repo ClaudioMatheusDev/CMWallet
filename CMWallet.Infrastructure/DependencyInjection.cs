@@ -12,6 +12,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
+
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException(
@@ -28,5 +29,12 @@ public static class DependencyInjection
         services.AddScoped<IMetaRepository, MetaRepository>();
 
         return services;
+    }
+
+    /// <summary>Cria o banco, se necessário, e aplica as migrations pendentes.</summary>
+    public static void AplicarMigrations(this IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.Migrate();
     }
 }

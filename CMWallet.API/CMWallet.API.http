@@ -37,8 +37,20 @@ Accept: application/json
 POST {{CMWallet_HostAddress}}/api/metas
 Content-Type: application/json
 
-{ "valorMeta": 10000, "valorAtual": 0, "dataMeta": "2027-12-31T00:00:00", "contaId": 1 }
+{ "valorMeta": 10000, "valorAtual": 0, "dataMeta": "2027-12-31", "contaId": 1 }
 
 ###
 GET {{CMWallet_HostAddress}}/api/metas
+Accept: application/json
+
+### Saldo atual por conta (saldo inicial + entradas pagas − saídas pagas)
+GET {{CMWallet_HostAddress}}/api/contas
+Accept: application/json
+
+### Resumo do mês corrente
+GET {{CMWallet_HostAddress}}/api/resumo
+Accept: application/json
+
+### Resumo de um período e conta (datas inclusivas)
+GET {{CMWallet_HostAddress}}/api/resumo?dataInicio=2026-10-01&dataFim=2026-10-31&contaId=1
 Accept: application/json

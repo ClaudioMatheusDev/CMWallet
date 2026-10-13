@@ -7,7 +7,7 @@ namespace CMWallet.Domain.Entities
         public int TransacaoId { get; set; }
         public string Descricao { get; set; } = string.Empty;
         public decimal Valor { get; set; }
-        public DateTime Data { get; set; }
+        public DateOnly Data { get; set; }
         public Tipo Tipo { get; set; }
         public int CategoriaId { get; set; }
         public Categoria Categoria { get; set; } = null!;

@@ -13,7 +13,7 @@ namespace CMWallet.Application.Dtos
         public decimal Valor { get; set; }
 
         /// <summary>Nova data da transação. Quando omitida, a data atual é mantida.</summary>
-        public DateTime? Data { get; set; }
+        public DateOnly? Data { get; set; }
 
         [EnumDataType(typeof(Tipo), ErrorMessage = "Tipo inválido.")]
         public Tipo Tipo { get; set; }

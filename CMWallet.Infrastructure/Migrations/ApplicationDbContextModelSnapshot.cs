@@ -84,8 +84,8 @@ namespace CMWallet.Infrastructure.Migrations
                     b.Property<int>("ContaId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("DataMeta")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("DataMeta")
+                        .HasColumnType("date");
 
                     b.Property<decimal>("ValorAtual")
                         .HasColumnType("decimal(18,2)");
@@ -114,8 +114,8 @@ namespace CMWallet.Infrastructure.Migrations
                     b.Property<int>("ContaId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("Data")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("Data")
+                        .HasColumnType("date");
 
                     b.Property<DateTime>("DataCriacao")
                         .HasColumnType("datetime2");
@@ -138,7 +138,9 @@ namespace CMWallet.Infrastructure.Migrations
 
                     b.HasIndex("CategoriaId");
 
-                    b.HasIndex("ContaId");
+                    b.HasIndex("Data");
+
+                    b.HasIndex("ContaId", "Data");
 
                     b.ToTable("Transacoes");
                 });
@@ -148,7 +150,7 @@ namespace CMWallet.Infrastructure.Migrations
                     b.HasOne("CMWallet.Domain.Entities.Conta", "Conta")
                         .WithMany("MetasFinanceiras")
                         .HasForeignKey("ContaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Conta");
@@ -165,7 +167,7 @@ namespace CMWallet.Infrastructure.Migrations
                     b.HasOne("CMWallet.Domain.Entities.Conta", "Conta")
                         .WithMany("Transacoes")
                         .HasForeignKey("ContaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Categoria");

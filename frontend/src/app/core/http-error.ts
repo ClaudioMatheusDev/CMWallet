@@ -3,8 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 /**
  * Extrai uma mensagem legível de um erro HTTP da API.
  *
- * A API responde `{ message }` para erros de negócio e `ProblemDetails` com
- * `errors` para falhas de validação de modelo.
+ * A API responde todos os erros como `ProblemDetails`: a mensagem para o usuário
+ * vem em `detail`, e falhas de validação trazem também `errors` por campo.
  */
 export function mensagemDeErro(erro: unknown, padrao: string): string {
   if (!(erro instanceof HttpErrorResponse)) {
@@ -16,9 +16,9 @@ export function mensagemDeErro(erro: unknown, padrao: string): string {
 
   const corpo: unknown = erro.error;
   if (corpo && typeof corpo === 'object') {
-    const { message, errors } = corpo as { message?: unknown; errors?: unknown };
-    if (typeof message === 'string' && message.trim()) {
-      return message;
+    const { detail, errors } = corpo as { detail?: unknown; errors?: unknown };
+    if (typeof detail === 'string' && detail.trim()) {
+      return detail;
     }
     if (errors && typeof errors === 'object') {
       const primeira = Object.values(errors)

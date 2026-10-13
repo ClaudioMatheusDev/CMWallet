@@ -19,9 +19,10 @@ public class MetaFinanceiraConfiguration : IEntityTypeConfiguration<MetaFinancei
         entity.Property(m => m.DataMeta)
             .IsRequired();
 
+        // Excluir uma conta com metas é bloqueado pelo serviço; a FK garante o mesmo no banco.
         entity.HasOne(m => m.Conta)
             .WithMany(c => c.MetasFinanceiras)
             .HasForeignKey(m => m.ContaId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -2,6 +2,7 @@ using CMWallet.Application.Dtos;
 using CMWallet.Application.Exceptions;
 using CMWallet.Application.Interfaces;
 using CMWallet.Domain.Entities;
+using CMWallet.Domain.Enums;
 
 namespace CMWallet.Application.Services
 {
@@ -24,40 +25,48 @@ namespace CMWallet.Application.Services
             _timeProvider = timeProvider;
         }
 
-        public async Task<int> CriarTransacaoAsync(TransacaoCriarDto dto)
+        public async Task<int> CriarTransacaoAsync(TransacaoCriarDto dto, CancellationToken cancellationToken = default)
         {
-            await GarantirContaECategoriaExistemAsync(dto.ContaId, dto.CategoriaId);
+            await GarantirContaExisteAsync(dto.ContaId, cancellationToken);
+            await GarantirCategoriaCompativelAsync(dto.CategoriaId, dto.Tipo, cancellationToken);
 
-            var agora = _timeProvider.GetUtcNow().UtcDateTime;
-
+            var agora = _timeProvider.GetUtcNow();
             var transacao = new Transacao
             {
                 Descricao = dto.Descricao.Trim(),
                 Valor = dto.Valor,
-                Data = dto.Data ?? agora,
+                Data = dto.Data ?? DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime),
                 Tipo = dto.Tipo,
                 CategoriaId = dto.CategoriaId,
                 ContaId = dto.ContaId,
                 Pago = dto.Pago,
-                DataCriacao = agora
+                DataCriacao = agora.UtcDateTime
             };
 
-            await _transacaoRepository.AdicionarTransacaoAsync(transacao);
-            await _transacaoRepository.SalvarAlteracoesAsync();
+            await _transacaoRepository.AdicionarTransacaoAsync(transacao, cancellationToken);
+            await _transacaoRepository.SalvarAlteracoesAsync(cancellationToken);
 
             return transacao.TransacaoId;
         }
 
-        public async Task<TransacaoResponseDto> BuscarTransacaoPorIdAsync(int transacaoId)
+        public async Task<TransacaoResponseDto> BuscarTransacaoPorIdAsync(int transacaoId, CancellationToken cancellationToken = default)
         {
-            var transacao = await ObterTransacaoAsync(transacaoId);
+            var transacao = await _transacaoRepository.BuscarTransacaoPorIdAsync(transacaoId, cancellationToken)
+                ?? throw new TransacaoNaoEncontradaException(transacaoId);
 
             return ParaDto(transacao);
         }
 
-        public async Task<PagedResult<TransacaoResponseDto>> ListarTransacoesAsync(TransacaoFiltroDto filtro)
+        public async Task<PagedResult<TransacaoResponseDto>> ListarTransacoesAsync(
+            TransacaoFiltroDto filtro,
+            CancellationToken cancellationToken = default)
         {
-            var (itens, total) = await _transacaoRepository.ListarTransacoesAsync(filtro);
+            if (filtro.DataInicio > filtro.DataFim)
+            {
+                throw new ValidacaoNegocioException("A data final deve ser igual ou posterior à data inicial.");
+            }
+
+            var (itens, total) = await _transacaoRepository.ListarTransacoesAsync(filtro, cancellationToken);
 
             return new PagedResult<TransacaoResponseDto>
             {
@@ -68,21 +77,28 @@ namespace CMWallet.Application.Services
             };
         }
 
-        public async Task ApagarTransacaoAsync(int transacaoId)
+        public async Task ApagarTransacaoAsync(int transacaoId, CancellationToken cancellationToken = default)
         {
-            var transacao = await ObterTransacaoAsync(transacaoId);
+            var transacao = await ObterParaEdicaoAsync(transacaoId, cancellationToken);
 
             _transacaoRepository.DeletarTransacao(transacao);
-            await _transacaoRepository.SalvarAlteracoesAsync();
+            await _transacaoRepository.SalvarAlteracoesAsync(cancellationToken);
         }
 
-        public async Task AtualizarTransacaoAsync(int transacaoId, TransacaoAtualizarDto dto)
+        public async Task AtualizarTransacaoAsync(
+            int transacaoId,
+            TransacaoAtualizarDto dto,
+            CancellationToken cancellationToken = default)
         {
-            var transacao = await ObterTransacaoAsync(transacaoId);
+            var transacao = await ObterParaEdicaoAsync(transacaoId, cancellationToken);
 
-            if (transacao.ContaId != dto.ContaId || transacao.CategoriaId != dto.CategoriaId)
+            if (transacao.ContaId != dto.ContaId)
             {
-                await GarantirContaECategoriaExistemAsync(dto.ContaId, dto.CategoriaId);
+                await GarantirContaExisteAsync(dto.ContaId, cancellationToken);
+            }
+            if (transacao.CategoriaId != dto.CategoriaId || transacao.Tipo != dto.Tipo)
+            {
+                await GarantirCategoriaCompativelAsync(dto.CategoriaId, dto.Tipo, cancellationToken);
             }
 
             transacao.Descricao = dto.Descricao.Trim();
@@ -93,27 +109,38 @@ namespace CMWallet.Application.Services
             transacao.ContaId = dto.ContaId;
             transacao.Pago = dto.Pago;
 
-            await _transacaoRepository.SalvarAlteracoesAsync();
+            await _transacaoRepository.SalvarAlteracoesAsync(cancellationToken);
         }
 
-        private async Task<Transacao> ObterTransacaoAsync(int transacaoId)
+        private async Task<Transacao> ObterParaEdicaoAsync(int transacaoId, CancellationToken cancellationToken)
         {
-            return await _transacaoRepository.BuscarTransacaoPorIdAsync(transacaoId)
+            return await _transacaoRepository.BuscarTransacaoParaEdicaoAsync(transacaoId, cancellationToken)
                 ?? throw new TransacaoNaoEncontradaException(transacaoId);
         }
 
-        private async Task GarantirContaECategoriaExistemAsync(int contaId, int categoriaId)
+        private async Task GarantirContaExisteAsync(int contaId, CancellationToken cancellationToken)
         {
-            if (await _contaRepository.BuscarContaPorIdAsync(contaId) is null)
+            if (!await _contaRepository.ExisteContaAsync(contaId, cancellationToken))
             {
                 throw new ContaNaoEncontradaException(contaId);
             }
+        }
 
-            if (await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId) is null)
+        /// <summary>Uma entrada só pode usar categoria de entrada, e uma saída, categoria de saída.</summary>
+        private async Task GarantirCategoriaCompativelAsync(int categoriaId, Tipo tipo, CancellationToken cancellationToken)
+        {
+            var categoria = await _categoriaRepository.BuscarCategoriaPorIdAsync(categoriaId, cancellationToken)
+                ?? throw new CategoriaNaoEncontradaException(categoriaId);
+
+            if (categoria.Tipo != tipo)
             {
-                throw new CategoriaNaoEncontradaException(categoriaId);
+                throw new ValidacaoNegocioException(
+                    $"A categoria \"{categoria.Nome}\" é de {DescreverTipo(categoria.Tipo)} " +
+                    $"e não pode ser usada em uma transação de {DescreverTipo(tipo)}.");
             }
         }
+
+        private static string DescreverTipo(Tipo tipo) => tipo == Tipo.Entrada ? "entrada" : "saída";
 
         private static TransacaoResponseDto ParaDto(Transacao transacao) => new()
         {

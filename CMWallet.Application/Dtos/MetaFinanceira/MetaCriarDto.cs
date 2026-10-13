@@ -11,7 +11,7 @@ namespace CMWallet.Application.Dtos
         public decimal ValorAtual { get; set; }
 
         [Required(ErrorMessage = "A data da meta é obrigatória.")]
-        public DateTime? DataMeta { get; set; }
+        public DateOnly? DataMeta { get; set; }
 
         [Range(1, int.MaxValue, ErrorMessage = "A conta é obrigatória.")]
         public int ContaId { get; set; }
